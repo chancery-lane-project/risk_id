@@ -1,0 +1,8 @@
+tclp/data/cleaned_gen_clauses
+tclp/data/synth_data
+tclp/data/test_contracts
+tclp/data/thechancerylaneproject.WordPress.xml
+**/optimizer.pt
+**/__pycache__/
+**/.DS_Store
+

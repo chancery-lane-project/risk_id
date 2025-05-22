@@ -1,0 +1,10 @@
+*.txt
+*.npy
+*.xml
+tclp/legalbert/
+tclp/data/
+tclp/clause_detector/notebooks/wandb/
+tclp/CC_BERT/CC_model/
+tclp/clause_recommender/legalbert/legalbert_model/model.safetensors
+tclp/CC_BERT/CC_model_detect/
+tclp/clause_detector/notebooks/artifacts/

@@ -1,0 +1,16 @@
+services:
+  clause-recommender:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"  # Map host port 8000 to container port 8000
+    command: ["uvicorn", "tclp.clause_recommender.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  clause-detector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"  # Map host port 8080 to container port 8080
+    command: ["uvicorn", "tclp.clause_detector.detector:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
