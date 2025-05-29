@@ -14,6 +14,10 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 app = FastAPI()
 MAX_FILE_LIMIT = 1000
+CAT0 = "unlikely"
+CAT1 = "possible"
+CAT2 = "likely"
+CAT3 = "very likely"
 
 # Enable CORS for frontend-backend communication
 app.add_middleware(
@@ -138,56 +142,56 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
             result_df, processed_contracts, labelled=False
         )
 
-        likely, very_likely, extremely_likely, none = du.create_threshold_buckets(contract_df)
+        zero, one, two, three = du.create_threshold_buckets(contract_df)
         
-        print("likely columns:", likely.columns)
+        print(CAT0, zero.columns)
 
         bucket_details = {
-            "could_contain": {
-                "count": len(likely),
-                "documents": likely["index"].tolist(),
+            CAT0: {
+                "count": len(zero),
+                "documents": zero["index"].tolist(),
             },
-            "likely": {
-                "count": len(very_likely),
-                "documents": very_likely["index"].tolist(),
+            CAT1: {
+                "count": len(one),
+                "documents": one["index"].tolist(),
             },
-            "very_likely": {
-                "count": len(extremely_likely),
-                "documents": extremely_likely["index"].tolist(),
+            CAT2: {
+                "count": len(two),
+                "documents": two["index"].tolist(),
             },
-            "not_likely": {
-                "count": len(none),
-                "documents": none["index"].tolist(),
+            CAT3: {
+                "count": len(three),
+                "documents": three["index"].tolist(),
             },
         }
 
         if is_folder == "true":
             percentages = du.print_percentages(
-                likely,
-                very_likely,
-                extremely_likely,
-                none,
+                zero,
+                one,
+                two,
+                three,
                 contract_df,
                 return_result=True,
             )
             uploaded_files = os.listdir(temp_dir)
             print("Uploaded Files:", uploaded_files)
             (
-                likely_folder,
-                very_likely_folder,
-                extremely_likely_folder,
-                none_folder,
+                zero_folder,
+                one_folder,
+                two_folder,
+                three_folder,
             ) = du.make_folders(
-                likely, very_likely, extremely_likely, none, temp_dir, output_dir
+                zero, one, two, three, temp_dir, output_dir
             )
             zip_files = {}
             for category, folder in zip(
-                ["likely", "very_likely", "extremely_likely", "none"],
+                [CAT0, CAT1, CAT2, CAT3],
                 [
-                    likely_folder,
-                    very_likely_folder,
-                    extremely_likely_folder,
-                    none_folder,
+                    zero_folder,
+                    one_folder,
+                    two_folder,
+                    three_folder,
                 ],
             ):
                 zip_path = f"{folder}.zip"
@@ -198,17 +202,20 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
             response = {
                 "percentages": percentages,
                 "buckets": bucket_details,
+                "bucket_labels": {
+                    "cat0": CAT0,
+                    "cat1": CAT1,
+                    "cat2": CAT2,
+                    "cat3": CAT3,
+                },
                 "download_links": {
-                    "likely_zip": "/output/likely.zip",
-                    "very_likely_zip": "/output/very_likely.zip",
-                    "extremely_likely_zip": "/output/extremely_likely.zip",
-                    "none_zip": "/output/none.zip",
+                    f"{cat}_zip": f"/output/{os.path.basename(zip_files[cat])}" for cat in [CAT0, CAT1, CAT2, CAT3]
                 },
             }
             return JSONResponse(content=response)
         else:
             result = du.print_single(
-                likely, very_likely, extremely_likely, none, return_result=True
+                zero, one, two, three, return_result=True
             )
             response = {
                 "classification": result,

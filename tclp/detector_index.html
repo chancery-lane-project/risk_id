@@ -273,21 +273,21 @@
 		  display: block;
 	margin: 10px 0 0;
 	}
-	.detection-result .result-blk.extremely-likely {
-	  border-left: 6px solid #0b9216;
-	  color: #0b9216;
+	.detection-result .result-blk.cat0 {
+	border-left: 6px solid #d05c15; /* for CAT0: "unlikely" */
+	color: #d05c15;
 	}
-	.detection-result .result-blk.very-likely {
-	  border-left: 6px solid #7bae0c;
-	  color: #7bae0c;
+	.detection-result .result-blk.cat1 {
+	border-left: 6px solid #ac8500; /* for CAT1: "possible" */
+	color: #ac8500;
 	}
-	.detection-result .result-blk.likely {
-	  border-left: 6px solid #ac8500;
-	  color: #ac8500;
+	.detection-result .result-blk.cat2 {
+	border-left: 6px solid #7bae0c; /* for CAT2: "likely" */
+	color: #7bae0c;
 	}
-	.detection-result .result-blk.unlikely {
-	  border-left: 6px solid #d05c15;
-	  color: #d05c15;
+	.detection-result .result-blk.cat3 {
+	border-left: 6px solid #0b9216; /* for CAT3: "very likely" */
+	color: #0b9216;
 	}
 	.detection-result .result-blk.unknown {
 	  border-left: 6px solid #D70000;
@@ -630,6 +630,14 @@
 	</div>
 
 	<script>
+		// Define CAT_LABELS globally at the top of your script
+        const CAT_LABELS = [
+            { key: "cat0", label: "unlikely" },
+            { key: "cat1", label: "possible" },
+            { key: "cat2", label: "likely" },
+            { key: "cat3", label: "very likely" },
+        ];
+
 		const selectFileButton = document.getElementById("selectFile");
 		const selectFolderButton = document.getElementById("selectFolder");
 		const uploadForm = document.getElementById("uploadForm");
@@ -640,9 +648,6 @@
 		const progressBar = document.getElementById("progressBar");
 		const errorBanner = document.getElementById("errorBanner");
 		const errorMessage = document.getElementById("errorMessage");
-		
-
-
 
 		const MAX_FILE_LIMIT = 1000;
 
@@ -769,27 +774,41 @@
 
 			const baseUrl = `${window.location.protocol}//${window.location.host}`;
 
-			const response = await fetch(`${baseUrl}/process/`, {
-				method: "POST",
-				body: formData,
-			});
-
 			try {
-				const result = await response.json();
-
-				clearInterval(progressInterval);  //stop the progress bar once we have the response
-				progressBar.style.width = "100%"; //complete the progress bar
-
-				loadingDiv.classList.add("hidden");
+				const response = await fetch(`${baseUrl}/process/`, {
+					method: "POST",
+					body: formData,
+				});
 
 				if (!response.ok) {
-					const error = result.error || "An error occurred while processing.";
+					loadingDiv.classList.add("hidden");
 					resultDiv.classList.remove("hidden");
-					resultDiv.innerHTML = `<p style="color: red;">${error}</p>`;
-
-					//redirect to the home screen
-					window.location.href = '/?error=processing-failed';
+					resultDiv.innerHTML = `<p style="color: red;">Error processing your request. Please try again.</p>`;
 					return;
+				}
+
+				const result = await response.json();
+
+				if (result.error) {
+					resultDiv.classList.remove("hidden");
+					resultDiv.innerHTML = `<p style="color: red;">${result.error}</p>`;
+					return;
+				}
+
+				const bucketLabels = result.bucket_labels;
+				const reverseLabels = Object.entries(bucketLabels).reduce((acc, [key, value]) => {
+				acc[value] = key;
+				return acc;
+				}, {});
+
+				clearInterval(progressInterval);
+				progressBar.style.width = "100%";
+				loadingDiv.classList.add("hidden");
+
+				if (result.error) {
+				resultDiv.classList.remove("hidden");
+				resultDiv.innerHTML = `<p style="color: red;">${result.error}</p>`;
+				return;
 				}
 
 				//results for both folder and file uploads
@@ -803,15 +822,21 @@
 					uploadForm.classList.add("hidden");
 					resultDiv.classList.remove("hidden");
 
+					let bucketsHtml = '';
+					for (const [bucketKey, label] of Object.entries(bucketLabels)) {
+						const bucket = buckets[label];
+						const percentage = percentages[label];
+						const downloadLink = links[`${label}_zip`];
+
+						bucketsHtml += renderBucket(bucketKey, label, bucket, percentage, downloadLink);
+					}
+
 					resultDiv.innerHTML = `
 						<h2>Result for multiple contracts</h2>
 						<div class="detection-result multiple">
-
-							${renderBucket('very-likely', 'very likely', buckets.very_likely, percentages.very_likely, links.very_likely_zip)}
-							${renderBucket('likely', 'likely', buckets.likely, percentages.likely, links.likely_zip)}
-							${renderBucket('could-contain', 'could contain', buckets.could_contain, percentages.could_contain, links.could_contain_zip)}
-							${renderBucket('not-likely', 'not likely', buckets.not_likely, percentages.not_likely, links.not_likely_zip)}
-
+							${CAT_LABELS.map(cat => 
+							renderBucket(cat.key, cat.label, buckets[cat.label], percentages[cat.label], links[cat.label + '_zip'])
+							).join('')}
 						</div>
 
 					   <div class='report-findings'>
@@ -823,76 +848,109 @@
 					   </div>
 					`;
 				} else {
-					const classification = result.classification;
-					const highlight = result.highlighted_content;
+				const classification = result.classification;
+				const highlight = result.highlighted_content;
+				const bucketLabels = result.bucket_labels;
 
-					uploadForm.classList.add("hidden");
-					resultDiv.classList.remove("hidden");
-
-					if (classification === "unlikely") {
-						// Render result for "unlikely" classification
-						resultDiv.innerHTML = `
-							<h2>Result for the single contract</h2>
-							<div class="detection-result single">
-								<div class='result-blk unlikely'>
-									<strong>It is ${classification}</strong>
-									<span class='desc'>that this contract contains climate aligned clauses.</span>
-									<a data-fancybox data-src='#contract-text-original' href='#'>View the original text</a>
-								</div>
-							</div>
-							
-						  <div id="contract-text-original" class="contract-listing hidden">
-								<h1>Original contract text</h1>
-							   <div class='highlighted-text-wrapper'>
-								${highlight}
-							   </div>
-								<button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
-							</div>
-
-						  <div id='guideReccomendations' class='border-section'>
-							  <h2>Improve the result for this contract</h2>
-							  <div class='cfc-cards-grid grid-count--2 grid-size--small cards-type--guide-summary-card-small '>
-								<div class='card-1 cfc-card has-post-thumbnail'><div class='cfc-card__inner'><div class='cfc-card__content'><span class='cfc-card__type'>Guide</span><h3 class='cfc-card__heading'><a class='cfc-card__link' href='https://chancerylaneproject.org/guides/get-information-on-contract-emission'>Get information on contract emissions</a></h3><div class='cfc-card__description'>Gather data on emissions related to contracts to help measure, manage and report on them</div></div><figure class='cfc-card__image'><picture><img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Get-information-on-contract-emissions-640x384.png'></picture></figure></div></div>
-								<div class='card-2 cfc-card has-post-thumbnail'><div class='cfc-card__inner'><div class='cfc-card__content'><span class='cfc-card__type'>Guide</span><h3 class='cfc-card__heading'><a class='cfc-card__link' href='https://chancerylaneproject.org/guides/request-climate-information-in-due-diligence-questionnaires/'>Request climate information in due diligence questionnaires</a></h3><div class='cfc-card__description'>Assess the climate performance of other organisations and how they will impact your transition plan</div></div><figure class='cfc-card__image'><picture><img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Request-climate-information-in-due-diligence-questionnaires-640x384.png'></picture></figure></div></div>
-							  </div>
-							</div>
-						`;
-					} else {
-						// Render result for other classifications
-						resultDiv.innerHTML = `
-							<h2>Result for the single contract</h2>
-							<div class="detection-result single">
-								<div class='result-blk extremely-likely'>
-									<strong>It is ${classification}</strong>
-									<span class='desc'>that this contract contains climate aligned clauses.</span>
-									<a data-fancybox data-src='#contract-text-highlight' href='#'>View the text identified</a>
-								</div>
-							</div>
-							<div id="contract-text-highlight" class="contract-listing hidden">
-								<h1>Original contract text</h1>
-								<a class='cfc-button' href='#' onclick="scrollToHighlightedText(event, 'first-highlight')">Skip to climate aligned text</a>
-							   <div class='highlighted-text-wrapper'>
-								${highlight}
-							   </div>
-								<button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
-							</div>
-
-							<div id='guideReccomendations' class='border-section'>
-							  <h2>Improve the result for this contract</h2>
-							  <div class='cfc-cards-grid grid-count--2 grid-size--small cards-type--guide-summary-card-small '>
-								<div class='card-1 cfc-card has-post-thumbnail'><div class='cfc-card__inner'><div class='cfc-card__content'><span class='cfc-card__type'>Guide</span><h3 class='cfc-card__heading'><a class='cfc-card__link' href='https://chancerylaneproject.org/guides/get-information-on-contract-emission'>Get information on contract emissions</a></h3><div class='cfc-card__description'>Gather data on emissions related to contracts to help measure, manage and report on them</div></div><figure class='cfc-card__image'><picture><img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Get-information-on-contract-emissions-640x384.png'></picture></figure></div></div>
-								<div class='card-2 cfc-card has-post-thumbnail'><div class='cfc-card__inner'><div class='cfc-card__content'><span class='cfc-card__type'>Guide</span><h3 class='cfc-card__heading'><a class='cfc-card__link' href='https://chancerylaneproject.org/guides/request-climate-information-in-due-diligence-questionnaires/'>Request climate information in due diligence questionnaires</a></h3><div class='cfc-card__description'>Assess the climate performance of other organisations and how they will impact your transition plan</div></div><figure class='cfc-card__image'><picture><img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Request-climate-information-in-due-diligence-questionnaires-640x384.png'></picture></figure></div></div>
-							  </div>
-							</div>
-						`;
-					}
-				}
-			} catch (error) {
-				console.error(error);
-				loadingDiv.classList.add("hidden");
+				uploadForm.classList.add("hidden");
 				resultDiv.classList.remove("hidden");
-				resultDiv.innerHTML = `<p style="color: red;">Error processing your request. Please try again.</p>`;
+
+				// Determine the classification key (e.g., "cat0", "cat1", etc.)
+				const classKey = reverseLabels[classification] || 'unknown';
+				console.log("classKey:", classKey);
+
+				// CAT0 is your "low confidence" bucket
+				const isLowConfidence = classKey === "cat0";
+
+				const viewLinkId = isLowConfidence ? "#contract-text-original" : "#contract-text-highlight";
+				const viewLinkText = isLowConfidence ? "View the original text" : "View the text identified";
+				const contentBlockId = isLowConfidence ? "contract-text-original" : "contract-text-highlight";
+				const scrollButton = isLowConfidence
+					? ""
+					: `<a class='cfc-button' href='#' onclick="scrollToHighlightedText(event, 'first-highlight')">Skip to climate aligned text</a>`;
+				resultDiv.innerHTML = `
+					<h2>Result for the single contract</h2>
+					<div class="detection-result single">
+						<div class='result-blk ${classKey}'>
+							<strong>It is ${classification}</strong>
+							<span class='desc'>that this contract contains climate aligned clauses.</span>
+							<a data-fancybox data-src='${viewLinkId}' href='#'>${viewLinkText}</a>
+						</div>
+					</div>
+
+					<div id="${contentBlockId}" class="contract-listing hidden">
+						<h1>Original contract text</h1>
+						${scrollButton}
+						<div class='highlighted-text-wrapper'>
+							${highlight}
+						</div>
+						<button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
+					</div>
+
+					<div id='guideReccomendations' class='border-section'>
+						<h2>Improve the result for this contract</h2>
+						<div class='cfc-cards-grid grid-count--2 grid-size--small cards-type--guide-summary-card-small'>
+							<div class='card-1 cfc-card has-post-thumbnail'>
+								<div class='cfc-card__inner'>
+									<div class='cfc-card__content'>
+										<span class='cfc-card__type'>Guide</span>
+										<h3 class='cfc-card__heading'>
+											<a class='cfc-card__link' href='https://chancerylaneproject.org/guides/get-information-on-contract-emission'>
+												Get information on contract emissions
+											</a>
+										</h3>
+										<div class='cfc-card__description'>
+											Gather data on emissions related to contracts to help measure, manage and report on them
+										</div>
+									</div>
+									<figure class='cfc-card__image'>
+										<picture>
+											<img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Get-information-on-contract-emissions-640x384.png'>
+										</picture>
+									</figure>
+								</div>
+							</div>
+							<div class='card-2 cfc-card has-post-thumbnail'>
+								<div class='cfc-card__inner'>
+									<div class='cfc-card__content'>
+										<span class='cfc-card__type'>Guide</span>
+										<h3 class='cfc-card__heading'>
+											<a class='cfc-card__link' href='https://chancerylaneproject.org/guides/request-climate-information-in-due-diligence-questionnaires/'>
+												Request climate information in due diligence questionnaires
+											</a>
+										</h3>
+										<div class='cfc-card__description'>
+											Assess the climate performance of other organisations and how they will impact your transition plan
+										</div>
+									</div>
+									<figure class='cfc-card__image'>
+										<picture>
+											<img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Request-climate-information-in-due-diligence-questionnaires-640x384.png'>
+										</picture>
+									</figure>
+								</div>
+							</div>
+						</div>
+					</div>
+				`;
+			} 
+		} catch (error) {
+			console.error("❌ Network or parsing error:", error);
+
+			// Try to read the response body if it's available (for backend error info)
+			if (error instanceof Response) {
+				try {
+					const errorText = await error.text();
+					console.error("❗ Server response:", errorText);
+				} catch (innerErr) {
+					console.error("⚠️ Could not read error response:", innerErr);
+				}
 			}
+
+			loadingDiv.classList.add("hidden");
+			resultDiv.classList.remove("hidden");
+			resultDiv.innerHTML = `<p style="color: red;">Error processing your single file request. Please try again.</p>`;
+		}
 		});
 
 		const urlParams = new URLSearchParams(window.location.search);

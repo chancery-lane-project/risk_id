@@ -32,6 +32,11 @@ from transformers import AutoModel, AutoTokenizer
 # Detector utils #
 #-------------------------------------------------------------------#
 
+CAT0 = "unlikely"
+CAT1 = "possible"
+CAT2 = "likely"
+CAT3 = "very likely"
+
 ALPHA_PATTERN = re.compile(r"[a-zA-Z]")
 
 def load_labeled_contracts(data_folder, modified=False):
@@ -85,7 +90,7 @@ def create_and_clean_base_df(texts, labels, contract_ids, contract_level_labels)
 
 def find_ending_row(data, end_index):
     last_row = data.iloc[end_index]
-    if last_row["contract_ids"] != data.iloc[end_index + 1]["contract_ids"]:
+    if last_row["index"] != data.iloc[end_index + 1]["index"]:
         return end_index
     else:
         return find_ending_row(data, end_index + 1)
@@ -98,7 +103,7 @@ def custom_train_test_split(full_data, real_clause_column):
     train_data_temp = real_clauses
 
     # now that the clauses are remove, randomly shuffle the other data (but keep the contract ids together)
-    grouped = list(rest_data.groupby("contract_ids"))
+    grouped = list(rest_data.groupby("index"))
     random.shuffle(grouped)
     rest_data = pd.concat([group for name, group in grouped])
 
@@ -176,12 +181,12 @@ def create_contract_df(results_df, processed_contracts, labelled=True):
     combined_df = pd.concat([X_df, data], axis=1)
 
     # Group by contract_id and compute the sum of predicted positive clauses
-    contract_level_preds = combined_df.groupby("contract_ids")["prediction"].sum()
+    contract_level_preds = combined_df.groupby("index")["prediction"].sum()
     contract_level_preds.sort_values(ascending=False, inplace=True)
 
     # Compute keyword pass/fail per contract
     keyword_pass_dict = {}
-    for contract_id, group in combined_df.groupby("contract_ids"):
+    for contract_id, group in combined_df.groupby("index"):
         predicted_clauses = group[group["prediction"] == 1]
         if not predicted_clauses.empty:
             no_keyword_count = (predicted_clauses["contains_climate_keyword"] == False).sum()
@@ -195,7 +200,7 @@ def create_contract_df(results_df, processed_contracts, labelled=True):
     keyword_pass_series = pd.Series(keyword_pass_dict)
 
     if labelled:
-        contract_level_labels = combined_df.groupby("contract_ids")[
+        contract_level_labels = combined_df.groupby("index")[
             "contract_label"
         ].first()
         contract_level_df = pd.concat(
@@ -286,7 +291,7 @@ def load_unlabelled_contract(contract_path):
         raise ValueError(
             f"Invalid path: {contract_path}. Please provide a valid file or folder path."
         )
-    df = pd.DataFrame({"contract_ids": contract_ids, "text": texts})
+    df = pd.DataFrame({"index": contract_ids, "text": texts})
     return df
 
 
@@ -331,68 +336,83 @@ def list_all_txt_files(base_dir):
     return txt_files
 
 
-def make_folders(likely, very_likely, extremely_likely, none, temp_dir, output_folder):
+def make_folders(category_0, category_1, category_2, category_3, temp_dir, output_folder):
+    # Map category names (e.g., "unlikely") to their respective folder paths
     folders = {
-        "likely": os.path.join(output_folder, "likely"),
-        "very_likely": os.path.join(output_folder, "very_likely"),
-        "extremely_likely": os.path.join(output_folder, "extremely_likely"),
-        "none": os.path.join(output_folder, "none"),
+        CAT0: os.path.join(output_folder, CAT0),
+        CAT1: os.path.join(output_folder, CAT1),
+        CAT2: os.path.join(output_folder, CAT2),
+        CAT3: os.path.join(output_folder, CAT3),
     }
 
+    # Ensure all folders exist
     for folder in folders.values():
         os.makedirs(folder, exist_ok=True)
 
-    # Create a mapping of file names to their relative paths
+    # Create a mapping of base filenames to full relative paths
     uploaded_files = {
         os.path.basename(file): file for file in list_all_txt_files(temp_dir)
     }
 
+    # Map category names to the actual DataFrame objects
     categories = {
-        "likely": likely,
-        "very_likely": very_likely,
-        "extremely_likely": extremely_likely,
-        "none": none,
+        CAT0: category_0,
+        CAT1: category_1,
+        CAT2: category_2,
+        CAT3: category_3,
     }
 
-    for category, contracts in categories.items():
-        for _, contract in contracts.iterrows():
-            contract_id = contract["contract_ids"]
+    # Copy files into their respective folders
+    for category_name, contracts_df in categories.items():
+        for _, contract in contracts_df.iterrows():
+            contract_id = contract["index"]
             if contract_id in uploaded_files:
                 source_path = os.path.join(temp_dir, uploaded_files[contract_id])
-                destination_path = os.path.join(folders[category], contract_id)
+                destination_path = os.path.join(folders[category_name], contract_id)
                 shutil.copy(source_path, destination_path)
             else:
-                print(f"File not found: {contract_id}")
+                print(f"File not found for: {contract_id}")
 
+    # Return folder paths in original input order
     return (
-        folders["likely"],
-        folders["very_likely"],
-        folders["extremely_likely"],
-        folders["none"],
+        folders[CAT0],
+        folders[CAT1],
+        folders[CAT2],
+        folders[CAT3],
     )
 
+def print_single(category_0, category_1, category_2, category_3, return_result=False):
+    category_map = [
+        (category_3, CAT3),
+        (category_2, CAT2),
+        (category_1, CAT1),
+        (category_0, CAT0),
+    ]
 
-def print_single(likely, very_likely, extremely_likely, none, return_result=False):
-    result = ""
-    if len(extremely_likely) != 0:
-        result = "very likely"
-        output = "very likely"
-    elif len(very_likely) != 0:
-        result = "likely"
-        output = "likely"
-    elif len(likely) != 0:
-        result = "could contain"
-        output = "could contain"
-    elif len(none) != 0:
-        result = "unlikely"
-        output = "unlikely"
-    else:
-        result = "unknown"
-        output = "unknown"
-    if return_result:
-        return result
-    else:
-        print(output)
+    for df, label in category_map:
+        if len(df) != 0:
+            return label if return_result else print(label)
+
+    return "unknown" if return_result else print("unknown")
+        
+def print_percentages(category_0, category_1, category_2, category_3, contract_df, return_result=False):
+    total = len(contract_df)
+
+    categories = [
+        ("CAT0", category_0),
+        ("CAT1", category_1),
+        ("CAT2", category_2),
+        ("CAT3", category_3),
+    ]
+
+    percentages = {}
+    for cat_name, group in categories:
+        label = globals().get(cat_name, cat_name)
+        percentage = round(len(group) / total * 100, 2) if total > 0 else 0.0
+        percentages[label] = percentage
+        print(f"{label.replace('_', ' ').title()}: {percentage}%")
+
+    return percentages if return_result else None
 
 
 def zip_folder(folder_path, zip_file_path):
