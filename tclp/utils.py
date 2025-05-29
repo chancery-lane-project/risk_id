@@ -1,6 +1,6 @@
 #imports 
 import os
-import pickle
+import random
 import re
 import shutil
 import zipfile
@@ -34,10 +34,99 @@ from transformers import AutoModel, AutoTokenizer
 
 ALPHA_PATTERN = re.compile(r"[a-zA-Z]")
 
-def load_model(model_name):
-    with open(model_name, "rb") as f:
-        model = pickle.load(f)
-    return model
+def load_labeled_contracts(data_folder, modified=False):
+    texts = []
+    labels = []
+    contract_ids = []
+    contract_level_labels = []
+
+    contract_level_label = 1 if modified else 0
+
+    for root, _, files in os.walk(data_folder):
+        for file in files:
+            if not file.endswith(".txt"):
+                continue
+
+            contract_path = os.path.join(root, file)
+            contract_id = file
+
+            with open(contract_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or len(line) < 36 or not ALPHA_PATTERN.search(line):
+                        continue  # Skip short or non-alphabetic lines
+
+                    label = int(line[0])
+                    text = line[1:].strip()
+
+                    texts.append(text)
+                    labels.append(label)
+                    contract_ids.append(contract_id)
+                    contract_level_labels.append(contract_level_label)
+
+    return texts, labels, contract_ids, contract_level_labels
+
+def create_and_clean_base_df(texts, labels, contract_ids, contract_level_labels):
+    data = pd.DataFrame(
+        {
+            "contract_ids": contract_ids,
+            "text": texts,
+            "label": labels,
+            "contract_label": contract_level_labels,
+        }
+    )
+
+    # add a binary column that indicates whether it is a real clause; for all of these, that is 0
+    data["real_clause"] = 0
+    # remove rows where text is empty
+    data = data[data["text"].str.strip().astype(bool)]
+
+    return data
+
+def find_ending_row(data, end_index):
+    last_row = data.iloc[end_index]
+    if last_row["contract_ids"] != data.iloc[end_index + 1]["contract_ids"]:
+        return end_index
+    else:
+        return find_ending_row(data, end_index + 1)
+
+
+def custom_train_test_split(full_data, real_clause_column):
+    # setting the real clauses aside for exclusive use in the training set
+    real_clauses = full_data[full_data[real_clause_column] == 1]
+    rest_data = full_data[full_data[real_clause_column] == 0]
+    train_data_temp = real_clauses
+
+    # now that the clauses are remove, randomly shuffle the other data (but keep the contract ids together)
+    grouped = list(rest_data.groupby("contract_ids"))
+    random.shuffle(grouped)
+    rest_data = pd.concat([group for name, group in grouped])
+
+    train_size = int(0.75 * len(rest_data))
+    val_size = int(0.1 * len(rest_data))
+    # don't need the test size because it will be the rest of the data
+
+    train_end = find_ending_row(rest_data, train_size)
+    val_end = find_ending_row(rest_data, train_end + val_size)
+
+    train_data = rest_data[:train_end]
+    val_data = rest_data[train_end + 1 : val_end]
+    test_data = rest_data[val_end + 1 :]
+
+    # add the real clauses back in
+    train_data = pd.concat([train_data, train_data_temp])
+
+    # remember the indices of the train, val, and test data
+    train_indices = train_data.index.tolist()
+    val_indices = val_data.index.tolist()
+    test_indices = test_data.index.tolist()
+
+    # print the percentage of data in each split rounded to 2 decimal places and with a % sign
+    print("Train: " + str(round(len(train_data) / len(full_data) * 100, 2)) + "%")
+    print("Validation: " + str(round(len(val_data) / len(full_data) * 100, 2)) + "%")
+    print("Test: " + str(round(len(test_data) / len(full_data) * 100, 2)) + "%")
+
+    return train_data, val_data, test_data, train_indices, val_indices, test_indices
 
 def highlight_climate_content(results_df, text_column="sentence", prediction_column="prediction", keyword_column="contains_climate_keyword"):
     highlighted_text = ""
@@ -120,6 +209,66 @@ def create_contract_df(results_df, processed_contracts, labelled=True):
     contract_level_df.reset_index(inplace=True)
     return contract_level_df
 
+def process_text_document(text):
+    # Remove spaces around specific punctuation and ensure spacing consistency
+    text = re.sub(
+        r"\s*([;:\[\]\(\)“”])\s*", r"\1", text
+    )  # Remove spaces around these symbols
+    text = re.sub(
+        r"\s*([,;])", r"\1 ", text
+    )  # Ensure a space after commas and semicolons
+    text = re.sub(r"\s+", " ", text)  # Normalize multiple spaces to a single space
+    text = text.strip()  # Remove leading and trailing whitespace
+
+    # Remove all instances of "[END]"
+    text = re.sub(r"\s*\[END\]\s*", "", text)
+
+    # Ensure text ends with a proper punctuation mark
+    if text and text[-1] not in {".", "!", "?"}:
+        text = text.rstrip(text[-1]) + "."
+
+    # Add paragraph breaks after each period not following specific exceptions
+    text = re.sub(
+        r"(?<!\d)(?<!\b[A-Z])(?<!\bNo)(?<!\bi\.e)(?<!\be\.g)\. ", ".\n\n", text
+    )
+
+    # Remove leading/trailing dashes and replace excessive dashes within the text
+    text = re.sub(r"^-+|-+$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"-{2,}", "-", text)
+
+    return text
+
+def process_single_contract(file_path, texts, contract_ids):
+    """
+    Process a single contract file and append text data and contract IDs to the provided lists.
+    """
+    contract_id = os.path.basename(file_path)
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        # Combine all lines from the document
+        document = []
+        for line in f:
+            line = line.strip()
+            if line:
+                # remove the label if one is present
+                if line[0] in {"0", "1"} and line[1:].strip():
+                    line = line[1:].strip()
+                else:
+                    line = line
+                # filter lines with no alphabetic characters or shorter than 35 characters
+                if len(line) >= 35 and re.search(r"[a-zA-Z]", line):
+                    document.append(line)
+
+        # process entire document
+        if document:
+            full_text = " ".join(document)
+            processed_text = process_text_document(full_text)
+
+            split_lines = processed_text.split("\n\n")
+
+            for line in split_lines:
+                texts.append(line.strip())
+                contract_ids.append(contract_id)
 
 def load_unlabelled_contract(contract_path):
     texts = []

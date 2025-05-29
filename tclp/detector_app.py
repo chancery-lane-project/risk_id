@@ -1,14 +1,16 @@
-from fastapi import FastAPI, UploadFile, Form, Depends
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from starlette.status import HTTP_401_UNAUTHORIZED  # Import the status code
-
-from tclp.clause_detector import detector_utils as du
 import os
 import shutil
-from fastapi import HTTPException
+import traceback
+
+import torch
+import utils as du
+from fastapi import Depends, FastAPI, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.staticfiles import StaticFiles
+from starlette.status import HTTP_401_UNAUTHORIZED  # Import the status code
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 app = FastAPI()
 MAX_FILE_LIMIT = 1000
@@ -47,10 +49,13 @@ os.makedirs(output_dir, exist_ok=True)
 app.mount("/output", StaticFiles(directory=output_dir), name="output")
 
 # Load model when application starts
-model_name = os.path.join(
-    BASE_DIR, "/app/tclp/clause_detector/clause_identifier_model.pkl"
-)
-model = du.load_model(model_name)
+model_path = os.path.join(BASE_DIR, "models", "CC_BERT", "CC_model_detect")
+device = torch.device("cpu")
+
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+model = AutoModelForSequenceClassification.from_pretrained(model_path)
+model.to(device)
+model.eval()
 
 
 @app.post("/process/")
@@ -96,8 +101,9 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
                     },
                     status_code=400,
                 )
-
+        
             processed_contracts = du.load_unlabelled_contract(temp_dir)
+            texts = processed_contracts["text"].tolist()
 
         else:
             print("Processing single file upload...")
@@ -116,40 +122,42 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
             with open(file_path, "wb") as f:
                 f.write(await file.read())
 
-            processed_contracts = du.load_unlabelled_contract(file_path)
+            processed_contracts = du.load_unlabelled_contract(temp_dir)
+            texts = processed_contracts["text"].tolist()
 
         # Model predictions
-        results = model.predict(processed_contracts["text"])
+        results, _ = du.predict_climatebert(texts, tokenizer, device, model)
+        result_df, _ = du.create_result_df(results, processed_contracts)
+        
+        
         if is_folder == "false":
-            highlighted_output = du.highlight_climate_content(
-                processed_contracts["text"], results
-            )
+            highlighted_output = du.highlight_climate_content(result_df)
             du.save_file("highlighted_output.html", highlighted_output)
 
         contract_df = du.create_contract_df(
-            processed_contracts["text"], processed_contracts, results, labelled=False
+            result_df, processed_contracts, labelled=False
         )
 
-        likely, very_likely, extremely_likely, none = du.create_threshold_buckets(
-            contract_df
-        )
+        likely, very_likely, extremely_likely, none = du.create_threshold_buckets(contract_df)
+        
+        print("likely columns:", likely.columns)
 
         bucket_details = {
-            "likely": {
+            "could_contain": {
                 "count": len(likely),
-                "documents": likely["contract_ids"].tolist(),
+                "documents": likely["index"].tolist(),
+            },
+            "likely": {
+                "count": len(very_likely),
+                "documents": very_likely["index"].tolist(),
             },
             "very_likely": {
-                "count": len(very_likely),
-                "documents": very_likely["contract_ids"].tolist(),
-            },
-            "extremely_likely": {
                 "count": len(extremely_likely),
-                "documents": extremely_likely["contract_ids"].tolist(),
+                "documents": extremely_likely["index"].tolist(),
             },
-            "none": {
+            "not_likely": {
                 "count": len(none),
-                "documents": none["contract_ids"].tolist(),
+                "documents": none["index"].tolist(),
             },
         }
 
@@ -217,6 +225,7 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         return JSONResponse(content=response)
 
     except Exception as e:
+        traceback.print_exc()
         return JSONResponse(
             content={"error": f"An error occurred: {str(e)}"}, status_code=500
         )
@@ -224,19 +233,11 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
 
 @app.get("/")
 def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
-    return FileResponse(os.path.join(BASE_DIR, "/app/tclp/clause_detector/index.html"))
-
-
-@app.get("/test-file")
-async def test_file():
-    test_path = os.path.join(output_dir, "test.txt")
-    if not os.path.exists(test_path):
-        with open(test_path, "w") as f:
-            f.write("This is a test file.")
-    return FileResponse(test_path)
+    index_path = os.path.join(BASE_DIR, "detector_index.html")
+    return FileResponse(index_path)
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("detector:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("detector_app:app", host="0.0.0.0", port=8080, reload=True)
