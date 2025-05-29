@@ -1,0 +1,44 @@
+{
+  "os":  "macOS-14.5-arm64-arm-64bit",
+  "python":  "CPython 3.10.15",
+  "startedAt":  "2025-05-19T08:25:39.317520Z",
+  "program":  "/Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/clause_detector.ipynb",
+  "codePath":  "tclp/clause_detector/notebooks/clause_detector.ipynb",
+  "git":  {
+    "remote":  "https://github.com/chancery-lane-project/Clause-Comparison.git",
+    "commit":  "c13328cd3365d090bc49200b998569f332034c28"
+  },
+  "email":  "ger23@ic.ac.uk",
+  "root":  "/Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks",
+  "host":  "Georgias-MacBook-Air.local",
+  "executable":  "/Users/georgia/Library/Caches/pypoetry/virtualenvs/tclp-iQ_dTQ3E-py3.10/bin/python",
+  "codePathLocal":  "clause_detector.ipynb",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "245107195904",
+      "used":  "234836017152"
+    },
+    "/System/Volumes/Data":  {
+      "total":  "245107195904",
+      "used":  "234836017152"
+    }
+  },
+  "memory":  {
+    "total":  "8589934592"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  8
+  },
+  "apple":  {
+    "name":  "Apple M2",
+    "ecpuCores":  4,
+    "pcpuCores":  4,
+    "gpuCores":  8,
+    "memoryGb":  8,
+    "swapTotalBytes":  "11811160064",
+    "ramTotalBytes":  "8589934592"
+  }
+}

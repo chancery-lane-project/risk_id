@@ -1,0 +1,33 @@
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_setup.py:_flush():67] Current SDK version is 0.19.9
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_setup.py:_flush():67] Configure stats pid to 71728
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_setup.py:_flush():67] Loading settings from /Users/georgia/.config/wandb/settings
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_setup.py:_flush():67] Loading settings from /Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/settings
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_setup.py:_flush():67] Loading settings from environment variables
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_init.py:setup_run_log_directory():662] Logging user logs to /Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/run-20250422_130751-uickqhz4/logs/debug.log
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_init.py:setup_run_log_directory():663] Logging internal logs to /Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/run-20250422_130751-uickqhz4/logs/debug-internal.log
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_init.py:monkeypatch_ipython():581] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x105a3e560>
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_init.py:init():781] calling init triggers
+2025-04-22 13:07:51,695 INFO    MainThread:71728 [wandb_init.py:init():786] wandb.init called with sweep_config: {}
+config: {'_wandb': {}}
+2025-04-22 13:07:51,696 INFO    MainThread:71728 [wandb_init.py:init():809] starting backend
+2025-04-22 13:07:51,696 INFO    MainThread:71728 [wandb_init.py:init():813] sending inform_init request
+2025-04-22 13:07:51,736 INFO    MainThread:71728 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2025-04-22 13:07:51,737 INFO    MainThread:71728 [wandb_init.py:init():823] backend started and connected
+2025-04-22 13:07:51,744 INFO    MainThread:71728 [wandb_run.py:_label_probe_notebook():1267] probe notebook
+2025-04-22 13:07:51,745 INFO    MainThread:71728 [wandb_run.py:_label_probe_notebook():1277] Unable to probe notebook: Expecting value: line 1 column 1 (char 0)
+2025-04-22 13:07:51,745 INFO    MainThread:71728 [wandb_init.py:init():915] updated telemetry
+2025-04-22 13:07:51,780 INFO    MainThread:71728 [wandb_init.py:init():939] communicating run to backend with 90.0 second timeout
+2025-04-22 13:07:52,607 INFO    MainThread:71728 [wandb_init.py:init():1014] starting run threads in backend
+2025-04-22 13:07:52,900 INFO    MainThread:71728 [wandb_run.py:_console_start():2454] atexit reg
+2025-04-22 13:07:52,900 INFO    MainThread:71728 [wandb_run.py:_redirect():2306] redirect: wrap_raw
+2025-04-22 13:07:52,901 INFO    MainThread:71728 [wandb_run.py:_redirect():2371] Wrapping output streams.
+2025-04-22 13:07:52,901 INFO    MainThread:71728 [wandb_run.py:_redirect():2394] Redirects installed.
+2025-04-22 13:07:52,905 INFO    MainThread:71728 [wandb_init.py:init():1056] run started, returning control to user process
+2025-04-22 13:07:52,906 INFO    MainThread:71728 [jupyter.py:save_ipynb():384] [no run ID] not saving jupyter notebook
+2025-04-22 13:07:52,907 INFO    MainThread:71728 [wandb_init.py:_pause_backend():546] [no run ID] pausing backend
+2025-04-22 13:08:37,167 INFO    MainThread:71728 [wandb_init.py:_resume_backend():551] [no run ID] resuming backend
+2025-04-22 13:09:03,891 INFO    MainThread:71728 [jupyter.py:save_ipynb():384] [no run ID] not saving jupyter notebook
+2025-04-22 13:09:03,892 INFO    MainThread:71728 [wandb_init.py:_pause_backend():546] [no run ID] pausing backend
+2025-04-22 13:09:51,057 INFO    MainThread:71728 [wandb_init.py:_resume_backend():551] [no run ID] resuming backend
+2025-04-22 13:09:51,065 INFO    MainThread:71728 [jupyter.py:save_ipynb():384] [no run ID] not saving jupyter notebook
+2025-04-22 13:09:51,065 INFO    MainThread:71728 [wandb_init.py:_pause_backend():546] [no run ID] pausing backend

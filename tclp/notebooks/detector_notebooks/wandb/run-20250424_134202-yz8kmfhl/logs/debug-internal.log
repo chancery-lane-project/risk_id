@@ -1,0 +1,18 @@
+{"time":"2025-04-24T13:42:02.58152+01:00","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"/Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/run-20250424_134202-yz8kmfhl/logs/debug-core.log"}
+{"time":"2025-04-24T13:42:03.239711+01:00","level":"INFO","msg":"created new stream","id":"yz8kmfhl"}
+{"time":"2025-04-24T13:42:03.240294+01:00","level":"INFO","msg":"stream: started","id":"yz8kmfhl"}
+{"time":"2025-04-24T13:42:03.240859+01:00","level":"INFO","msg":"writer: Do: started","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:42:03.241773+01:00","level":"INFO","msg":"sender: started","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:42:03.241854+01:00","level":"INFO","msg":"handler: started","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:42:03.590401+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-24T13:42:05.167575+01:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-24T13:43:15.537573+01:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-24T13:43:15.750984+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-04-24T13:43:15.751254+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-04-24T13:43:16.773802+01:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.102402709,"progress":"93B/93B"},{"desc":"uploading wandb-summary.json","runtime_seconds":0.100864792,"progress":"24B/24B"}],"total_operations":2}}
+{"time":"2025-04-24T13:43:17.084987+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-04-24T13:43:17.312279+01:00","level":"INFO","msg":"stream: closing","id":"yz8kmfhl"}
+{"time":"2025-04-24T13:43:17.312591+01:00","level":"INFO","msg":"handler: closed","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:43:17.312622+01:00","level":"INFO","msg":"sender: closed","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:43:17.31259+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":"yz8kmfhl"}
+{"time":"2025-04-24T13:43:17.312701+01:00","level":"INFO","msg":"stream: closed","id":"yz8kmfhl"}

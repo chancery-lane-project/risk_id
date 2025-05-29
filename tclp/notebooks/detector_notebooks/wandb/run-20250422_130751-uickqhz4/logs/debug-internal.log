@@ -1,0 +1,24 @@
+{"time":"2025-04-22T13:07:51.741978+01:00","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"/Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/run-20250422_130751-uickqhz4/logs/debug-core.log"}
+{"time":"2025-04-22T13:07:52.362397+01:00","level":"INFO","msg":"created new stream","id":"uickqhz4"}
+{"time":"2025-04-22T13:07:52.362438+01:00","level":"INFO","msg":"stream: started","id":"uickqhz4"}
+{"time":"2025-04-22T13:07:52.362568+01:00","level":"INFO","msg":"handler: started","stream_id":"uickqhz4"}
+{"time":"2025-04-22T13:07:52.362629+01:00","level":"INFO","msg":"writer: Do: started","stream_id":"uickqhz4"}
+{"time":"2025-04-22T13:07:52.362764+01:00","level":"INFO","msg":"sender: started","stream_id":"uickqhz4"}
+{"time":"2025-04-22T13:07:52.618553+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-22T13:07:52.907317+01:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-22T13:08:37.172012+01:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-22T13:08:38.278556+01:00","level":"WARN","msg":"sender: sendUseArtifact: job builder disabled, skipping"}
+{"time":"2025-04-22T13:09:03.897926+01:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-22T13:09:51.064595+01:00","level":"INFO","msg":"Resuming system monitor"}
+{"time":"2025-04-22T13:09:51.06653+01:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2025-04-22T14:24:21.463246+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:25:51.496082+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:29:21.481568+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:30:21.492545+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:30:51.474041+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:31:21.477456+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:32:21.501841+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:32:51.492209+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:33:51.497426+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:34:21.496393+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}
+{"time":"2025-04-22T14:34:51.496957+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/uickqhz4/file_stream\": dial tcp 35.186.228.49:443: connect: cannot allocate memory"}

@@ -1,0 +1,8 @@
+{"time":"2025-04-22T13:38:36.641099+01:00","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"/Users/georgia/Documents/coding/Clause-Comparison/tclp/clause_detector/notebooks/wandb/run-20250422_133836-3kluf17j/logs/debug-core.log"}
+{"time":"2025-04-22T13:38:37.876887+01:00","level":"INFO","msg":"created new stream","id":"3kluf17j"}
+{"time":"2025-04-22T13:38:37.877033+01:00","level":"INFO","msg":"stream: started","id":"3kluf17j"}
+{"time":"2025-04-22T13:38:37.877178+01:00","level":"INFO","msg":"writer: Do: started","stream_id":"3kluf17j"}
+{"time":"2025-04-22T13:38:37.878013+01:00","level":"INFO","msg":"handler: started","stream_id":"3kluf17j"}
+{"time":"2025-04-22T13:38:37.878028+01:00","level":"INFO","msg":"sender: started","stream_id":"3kluf17j"}
+{"time":"2025-04-22T13:38:38.13355+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-22T13:39:54.672639+01:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/ger23-imperial-college-london/huggingface/3kluf17j/file_stream\": EOF"}
