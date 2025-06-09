@@ -9,3 +9,4 @@ tclp/clause_recommender/legalbert/legalbert_model/model.safetensors
 tclp/CC_BERT/CC_model_detect/
 tclp/clause_detector/notebooks/artifacts/
 .history/
+tclp/models/artifacts/
