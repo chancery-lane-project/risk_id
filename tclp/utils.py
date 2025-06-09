@@ -27,7 +27,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
 from torch.nn.functional import softmax
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
 
 # Detector utils #
 #-------------------------------------------------------------------#
@@ -652,33 +652,8 @@ def output_feature_chart(vectorizer, X, most_similar_index):
 
     return merged_df
 
-# Helper Functions for Pooling
 def cls_pooling(outputs):
     return outputs.last_hidden_state[:, 0, :].cpu().numpy()
-
-
-def mean_pooling(outputs):
-    embeddings = outputs.last_hidden_state
-    return embeddings.mean(dim=1).cpu().numpy()
-
-
-def max_pooling(outputs):
-    embeddings = outputs.last_hidden_state
-    return embeddings.max(dim=1).values.cpu().numpy()
-
-
-def concat_pooling(outputs):
-    embeddings = outputs.last_hidden_state
-    mean_pooling = embeddings.mean(dim=1)
-    max_pooling = embeddings.max(dim=1).values
-    return torch.cat((mean_pooling, max_pooling), dim=1).cpu().numpy()
-
-
-def specific_token_pooling(outputs, token_index=None):
-    # Determine the token index for the last token if not specified
-    if token_index is None:
-        token_index = outputs.last_hidden_state.size(1) - 1  # Get the last token index
-    return outputs.last_hidden_state[:, token_index, :].cpu().numpy()
 
 
 def encode_text(text, tokenizer, model, token_index=None):
@@ -841,7 +816,9 @@ def rebuild_documents(df):
 def getting_started(model_path, clause_folder, clause_html):
     model_path = os.path.abspath(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
-    model = AutoModel.from_pretrained(model_path, local_files_only=True)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
+    model = model.base_model
+    #this is specific to embeddings; we have now lost the classification head
 
     documents, file_names, _ = load_clauses(clause_folder)
 
