@@ -539,19 +539,6 @@ def predict_climatebert(texts, tokenizer, device, model, batch_size=16):
 #-------------------------------------------------------------------#
 # utils.py
 """This is the utils file for the clause_recommender task."""
-
-
-def get_embeddings(method, embeddings_dir, documents, tokenizer, model):
-    path = os.path.join(embeddings_dir, f"{method}_embeddings.npy")
-    if os.path.exists(path):
-        return np.load(path)
-    else:
-        embs = np.vstack([
-            encode_text(doc, tokenizer, model, method)
-            for doc in documents
-        ])
-        np.save(path, embs)
-        return embs
     
 def load_clauses(clause_folder):
     documents = []
@@ -575,11 +562,6 @@ def load_clauses(clause_folder):
                     clause_titles.append(fname.replace(".txt", ""))  # fallback
 
     return documents, file_names, clause_titles
-
-def open_target(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        return file.read()
-
 
 def custom_stop_words():
     legal_words = [
@@ -635,19 +617,11 @@ def get_matching_clause(query_vector, document_vectors, clause_names):
         similarity_range,
     )
 
-
 def find_top_k(similarities, clause_names, k=3):
     best_match_indices = np.argsort(similarities)[::-1][:k]
     best_match_names = [clause_names[i] for i in best_match_indices]
     best_match_scores = [similarities[i] for i in best_match_indices]
     return best_match_names, best_match_scores, similarities
-
-
-def print_similarities(most_similar_clause, most_similar_score, similarity_range):
-    print(f"Most similar clause: {most_similar_clause}")
-    print(f"Cosine similarity score: {most_similar_score:.2f}")
-    print(f"Similarity range: {similarity_range:.2f}")
-
 
 def output_feature_chart(vectorizer, X, most_similar_index):
     # Get the feature names (words) from the vectorizer
@@ -678,48 +652,6 @@ def output_feature_chart(vectorizer, X, most_similar_index):
 
     return merged_df
 
-
-def process_similarity_df(similarities):
-    # Output the target documents sorted by similarity score
-    sorted_similarities = sorted(similarities.items(), key=lambda x: x[1], reverse=True)
-    similarity_df = pd.DataFrame(sorted_similarities, columns=["Document", "Clause"])
-
-    # if the column contains three elements, split it into three columns
-    if len(similarity_df["Clause"].iloc[0]) == 3:
-        similarity_df[["Similarity Score", "Clause Text", "Top Words"]] = pd.DataFrame(
-            similarity_df["Clause"].tolist(), index=similarity_df.index
-        )
-    else:
-        similarity_df[["Similarity Score", "Clause Text"]] = pd.DataFrame(
-            similarity_df["Clause"].tolist(), index=similarity_df.index
-        )
-
-    similarity_df = similarity_df.drop(columns=["Clause"])
-
-    return similarity_df
-
-
-def unique_clause_counter(similarity_df):
-    # number of unique clauses over 50% similarity
-    unique_clauses = similarity_df[similarity_df["Similarity Score"] > 0.5]
-    unique_clause_list = unique_clauses["Clause Text"].tolist()
-    unique_clause_list = pd.DataFrame(unique_clause_list, columns=["Clause"])
-    unique_clause_list["Count"] = 1
-    unique_clause_list = unique_clause_list.groupby("Clause").count().reset_index()
-    unique_clause_list = unique_clause_list.sort_values(by="Count", ascending=False)
-
-    return unique_clause_list
-
-
-def graph_ranges(similarity_ranges):
-    # plot the range of similarity differences
-    plt.hist(similarity_ranges, bins=20)
-    plt.xlabel("Difference in Cosine Similarity")
-    plt.ylabel("Frequency")
-    plt.title("Distribution of Cosine Similarity Differences")
-    plt.show()
-
-
 # Helper Functions for Pooling
 def cls_pooling(outputs):
     return outputs.last_hidden_state[:, 0, :].cpu().numpy()
@@ -749,39 +681,13 @@ def specific_token_pooling(outputs, token_index=None):
     return outputs.last_hidden_state[:, token_index, :].cpu().numpy()
 
 
-def encode_text(text, tokenizer, model, method="cls", token_index=None):
+def encode_text(text, tokenizer, model, token_index=None):
     inputs = tokenizer(
         text, return_tensors="pt", padding=True, truncation=True, max_length=512
     )
     with torch.no_grad():
         outputs = model(**inputs)
-
-    if method == "cls":
-        return cls_pooling(outputs)
-    elif method == "mean":
-        return mean_pooling(outputs)
-    elif method == "max":
-        return max_pooling(outputs)
-    elif method == "concat":
-        return concat_pooling(outputs)
-    elif method == "specific":
-        return specific_token_pooling(outputs, token_index)
-    else:
-        raise ValueError(
-            "Invalid method. Choose from 'cls', 'mean', 'max', 'concat', 'specific'."
-        )
-
-
-def encode_all(clauses, target_doc, tokenizer, model, method="cls"):
-    # Encode all clauses using the specified pooling method
-    clause_embeddings = np.vstack(
-        [encode_text(clause, tokenizer, model, method) for clause in clauses]
-    )
-
-    # Encode the target document
-    target_doc_embedding = encode_text(target_doc, tokenizer, model, method)
-
-    return clause_embeddings, target_doc_embedding
+    return cls_pooling(outputs)
 
 
 def find_top_similar_bow(target_doc, documents, file_names, similarity_threshold=0.15, k=30):
@@ -825,11 +731,11 @@ def get_embedding_matches_subset(
 ):
     # Embed the top-K candidate clauses
     subset_embeddings = np.vstack([
-        encode_text(doc, tokenizer, model, method)
+        encode_text(doc, tokenizer, model)
         for doc in documents_subset
     ])
     # Embed the query
-    query_embedding = encode_text(query_text, tokenizer, model, method).reshape(1, -1)
+    query_embedding = encode_text(query_text, tokenizer, model).reshape(1, -1)
 
     # Compute cosine similarity
     _, _, _, similarities, _ = get_matching_clause(query_embedding, subset_embeddings, names_subset)
@@ -884,7 +790,6 @@ def clean_string(s):
     s = re.sub(r'_+', '_', s)  # Collapse multiple underscores
     return s.strip('_')
 
-
 def attach_documents(df, documents, file_names):
     # Preprocess file_names
     file_map = {clean_string(name.replace('.txt', '')): (name, doc) for name, doc in zip(file_names, documents)}
@@ -934,8 +839,9 @@ def rebuild_documents(df):
     return filenames, documents
 
 def getting_started(model_path, clause_folder, clause_html):
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModel.from_pretrained(model_path)
+    model_path = os.path.abspath(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+    model = AutoModel.from_pretrained(model_path, local_files_only=True)
 
     documents, file_names, _ = load_clauses(clause_folder)
 
@@ -946,7 +852,6 @@ def getting_started(model_path, clause_folder, clause_html):
     names, docs = rebuild_documents(final_df)
     
     return tokenizer, model, names, docs, final_df
-
 
 def combine_title_and_text(row, title_to_document):
     title = row['Clause']
@@ -1091,14 +996,14 @@ def prepare_cluster(clause_tags, model, tokenizer, forced_labels):
     X = filtered['CombinedText']
     y = filtered['HybridCluster']
     X_emb = np.vstack([
-    encode_text(text, tokenizer, model, method='cls') for text in X
+    encode_text(text, tokenizer, model) for text in X
         ])
     X_train, X_test, y_train, y_test = per_cluster_split(X_emb, y, forced_labels, test_size=0.2, min_test_per_cluster=2)
     return X_train, X_test, y_train, y_test
 
 def perform_cluster(cluster_model, query_embedding, tokenizer, embedding_model, clause_tags, embed = False):
     if embed:
-        query_embedding = encode_text(query_embedding, tokenizer, embedding_model, method='mean')
+        query_embedding = encode_text(query_embedding, tokenizer, embedding_model)
     pred_cluster = cluster_model.predict(query_embedding.reshape(1, -1))[0]
     cluster_subset_df = clause_tags[clause_tags['HybridCluster'] == pred_cluster]
 
@@ -1126,4 +1031,67 @@ def prepare_clause_tags(clause_tags, final_df):
     clause_tags['PrimaryTag'] = clause_tags['Tag'].apply(most_common_tag)
 
     return clause_tags
+
+# Risk utils#
+#-------------------------------------------------------------------#
+
+def format_taxonomy_prompt(risk_taxonomy, given_prompt):
+    prompt = given_prompt 
+    prompt += "Here are the available categories:\n\n"
+    for _, row in risk_taxonomy.iterrows():
+        prompt += f"- `{row['Label']}`: {row['Description']}\n"
+    prompt += "\n"
+    prompt += "Return only the label that best applies, and explain your reasoning.\n"
+    return prompt
+
+def classify_clause(clause_text, taxonomy_df, given_prompt, client, model="qwen/qwen-2.5-7b-instruct"):
+    system_prompt = format_taxonomy_prompt(taxonomy_df, given_prompt)
     
+    user_prompt = f"""Clause:
+\"\"\"{clause_text}\"\"\"
+
+Which risk categories does this clause help mitigate?
+Respond in this JSON format:
+{{
+  "labels": ["label1", "label2", ...],
+  "justification": "Explain why these labels apply to this clause."
+}}"""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.2
+    )
+    
+    return response.choices[0].message.content
+
+def format_classification_result(name, result_json, risk_labels):
+    import json
+
+    # Parse the result if needed
+    if isinstance(result_json, str):
+        try:
+            parsed = json.loads(result_json)
+        except json.JSONDecodeError:
+            print(result_json)
+            parsed = {"labels": [], "justification": "Invalid JSON response"}
+
+    else:
+        parsed = result_json
+
+    labels = parsed.get("labels", [])
+    justification = parsed.get("justification", "")
+
+    # Start building the row: default to 0 for all risks
+    row = {label: "0" for label in risk_labels}
+    row["name"] = name
+    row["justification"] = justification
+
+    for label in labels:
+        if label in risk_labels:
+            row[label] = "1"  # mark as positive
+
+    return row
