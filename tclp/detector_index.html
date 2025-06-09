@@ -795,7 +795,12 @@
 					return;
 				}
 
-				const bucketLabels = result.bucket_labels;
+				const bucketLabels = result.bucket_labels || {
+					cat0: "unlikely",
+					cat1: "possible",
+					cat2: "likely",
+					cat3: "very likely"
+					};
 				const reverseLabels = Object.entries(bucketLabels).reduce((acc, [key, value]) => {
 				acc[value] = key;
 				return acc;

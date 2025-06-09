@@ -324,7 +324,7 @@ def create_threshold_buckets(contract_df):
     bucket_2 = df[df["bucket"] == 2]  # likely
     bucket_3 = df[df["bucket"] == 3]  # very likely
 
-    return bucket_1, bucket_2, bucket_3, bucket_0
+    return bucket_0, bucket_1, bucket_2, bucket_3
 
 def list_all_txt_files(base_dir):
     txt_files = []

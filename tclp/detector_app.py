@@ -220,7 +220,13 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
             response = {
                 "classification": result,
                 "highlighted_content": highlighted_output,
-            }
+                "bucket_labels": {
+                    "cat0": CAT0,
+                    "cat1": CAT1,
+                    "cat2": CAT2,
+                    "cat3": CAT3
+            
+                }}
 
         print(response)
 
