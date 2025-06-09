@@ -1032,6 +1032,14 @@ def plot_clusters(clause_tags, forced_labels, hybrid_2d):
         title="Hybrid UMAP: Text Embeddings + Tags + HDBSCAN Clusters"
     )
     fig.update_traces(marker=dict(size=6, opacity=0.7))
+    #make it more square 
+    fig.update_layout(
+    width=600,
+    height=900,
+    margin=dict(l=20, r=20, t=40, b=20),
+    xaxis=dict(scaleanchor=None),  # 👈 explicitly break any aspect lock
+    )
+    fig.update_yaxes(range=[-5, 5])
     fig.show()
     
 def per_cluster_split(X, y, cluster_labels, test_size=0.2, min_test_per_cluster=2, random_state=42):
