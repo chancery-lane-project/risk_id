@@ -10,7 +10,6 @@ from typing import List
 
 import hdbscan
 import hdbscan.prediction
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -27,7 +26,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
 from torch.nn.functional import softmax
-from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 # Detector utils #
 #-------------------------------------------------------------------#
@@ -701,7 +700,6 @@ def get_embedding_matches_subset(
     names_subset, 
     tokenizer, 
     model, 
-    method="cls", 
     k =3
 ):
     # Embed the top-K candidate clauses
@@ -887,21 +885,24 @@ def multi_label_jacccard(clause_tags, visualize = False):
 
 def perform_hdbscan(tag_matrix, embeddings): 
     hybrid_features = np.hstack([embeddings, tag_matrix])
+
     umap_model = umap.UMAP(random_state=42)
     hybrid_2d = umap_model.fit_transform(hybrid_features)
+
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=5,
-        min_samples=1,  # more sensitive to fine structure
-        cluster_selection_epsilon=0.6,  # lower = more clusters, play with this
+        min_samples=1,
+        cluster_selection_epsilon=0.6,
         prediction_data=True
     )
     _ = clusterer.fit_predict(hybrid_2d)
+
     soft_labels = hdbscan.prediction.all_points_membership_vectors(clusterer)
     forced_labels = soft_labels.argmax(axis=1)
     
-    return forced_labels, hybrid_2d
+    return forced_labels, hybrid_2d, umap_model
 
-def plot_clusters(clause_tags, forced_labels, hybrid_2d):
+def plot_clusters(clause_tags, hybrid_2d):
     fig = px.scatter(
         x=hybrid_2d[:, 0],
         y=hybrid_2d[:, 1],
@@ -916,10 +917,10 @@ def plot_clusters(clause_tags, forced_labels, hybrid_2d):
     fig.update_traces(marker=dict(size=6, opacity=0.7))
     #make it more square 
     fig.update_layout(
-    width=600,
+    width=900,
     height=900,
     margin=dict(l=20, r=20, t=40, b=20),
-    xaxis=dict(scaleanchor=None),  # 👈 explicitly break any aspect lock
+    xaxis=dict(scaleanchor=None),  
     )
     fig.update_yaxes(range=[-5, 5])
     fig.show()
@@ -968,29 +969,20 @@ def per_cluster_split(X, y, cluster_labels, test_size=0.2, min_test_per_cluster=
 
     return X_train, X_test, y_train, y_test
 
-def prepare_cluster(clause_tags, model, tokenizer, forced_labels):
-    filtered = clause_tags[clause_tags['HybridCluster'] != -1].copy()
-    X = filtered['CombinedText']
-    y = filtered['HybridCluster']
-    X_emb = np.vstack([
-    encode_text(text, tokenizer, model) for text in X
-        ])
-    X_train, X_test, y_train, y_test = per_cluster_split(X_emb, y, forced_labels, test_size=0.2, min_test_per_cluster=2)
-    return X_train, X_test, y_train, y_test
-
-def perform_cluster(cluster_model, query_embedding, tokenizer, embedding_model, clause_tags, embed = False):
+def perform_cluster(cluster_model, query_embedding, tokenizer, embedding_model, clause_tags, fitted_umap, embed=False):
+    # Embed the query if requested
     if embed:
         query_embedding = encode_text(query_embedding, tokenizer, embedding_model)
-    pred_cluster = cluster_model.predict(query_embedding.reshape(1, -1))[0]
+
+    query_embedding_umap = fitted_umap.transform(query_embedding.reshape(1, -1))
+
+    # Predict cluster
+    pred_cluster = cluster_model.predict(query_embedding_umap)[0]
+
+    # Filter clauses to predicted cluster
     cluster_subset_df = clause_tags[clause_tags['HybridCluster'] == pred_cluster]
 
-    # Get texts and titles
-    subset_docs = cluster_subset_df['CombinedText'].tolist()
-    subset_names = cluster_subset_df['Clause'].tolist()
-    print(clause_tags.columns)
-    cluster_subset_df = clause_tags[clause_tags['HybridCluster'] == pred_cluster]
-
-    # Get texts and titles
+    # Extract text and names
     subset_docs = cluster_subset_df['CombinedText'].tolist()
     subset_names = cluster_subset_df['Clause'].tolist()
     

@@ -29,6 +29,7 @@ COPY tclp/ /app/tclp/
 # Set environment variables for FastAPI
 ENV HOST=0.0.0.0
 ENV OPENBLAS_NUM_THREADS=1
+ENV OPENROUTER_API_KEY=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
 
 # Expose FastAPI ports
 EXPOSE 8000
