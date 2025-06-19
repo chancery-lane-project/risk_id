@@ -61,6 +61,7 @@ MODEL_PATH = "models/CC_BERT/CC_model_detect"
 CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
+RISK_INDICATORS = "data/risk_categorization_results.csv"
 INDEX_PATH = "index.html"
 CLUSTERING_MODEL = 'models/clustering_model.pkl'
 UMAP_MODEL = 'models/umap_model.pkl'
@@ -71,6 +72,8 @@ app.mount("/output", StaticFiles(directory=output_dir), name="output")
 print("[INFO] Loading model and data...")
 tokenizer, d_model, c_model, names, docs, final_df = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
 clause_tags = pd.read_excel(CLAUSE_TAGS)
+risk_df = pd.read_csv(RISK_INDICATORS)
+final_df = final_df.merge(risk_df, on="Title", how="left")
 with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
 umap_model = joblib.load(UMAP_MODEL)
@@ -308,7 +311,8 @@ async def find_clauses(file: UploadFile = File(...)):
         "matches": [
             {
                 "name": row["Clause Name"].replace(".txt", ""),
-                "reason": row["Reasoning"]
+                "reason": row["Reasoning"],
+                "risks": row["combined_labels"],
             }
             for _, row in df_response.iterrows()
         ]
@@ -353,12 +357,8 @@ def get_clause(clause_name: str):
     return {"name": full_title, "text": docs[idx]}
 
 # --- Serve Frontend ---
-@app.get("/")
+@app.get("/", response_class=FileResponse)
 def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
-    print("Serving INDEX_PATH:", INDEX_PATH, "Exists?", os.path.exists(INDEX_PATH))
-    return FileResponse(INDEX_PATH)
-
-# --- Run with Uvicorn ---
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=9000, reload=True)
+    if not os.path.exists(INDEX_PATH):
+        raise RuntimeError(f"{INDEX_PATH} not found")
+    return FileResponse(INDEX_PATH, media_type="text/html")

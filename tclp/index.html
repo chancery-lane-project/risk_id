@@ -667,13 +667,31 @@
                 if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
 
                 const result = await response.json();
+				const matches = result.matches || [];
 
 				document
 				.getElementById('recommenderHeader')
 				.classList.remove('hidden');
 
-                // --- Render Recommender Results ---
-                const detectionDiv = document.getElementById("detectionSummary");
+				const allRisks = matches
+					.flatMap(m => m.risks.split(',').map(r => r.trim()))
+					.filter(r => r);                 
+				const uniqueRisks = [...new Set(allRisks)];
+
+				const detectionDiv = document.getElementById("detectionSummary");
+				if (uniqueRisks.length) {
+					const risksStr = uniqueRisks.join(', ');
+					const riskBanner = document.createElement("div");
+					riskBanner.classList.add("border-section");
+					riskBanner.innerHTML = `
+						<h2>Some clauses recommended to help protect against</h2>
+						<p style="font-size:1.5em; font-weight:bold; margin:0.5em 0;">
+						${risksStr}
+						</p>
+						<p>This result suggests you <strong>could</strong> be liable for these risks.</p>
+					`;
+					resultDiv.insertBefore(riskBanner, detectionDiv);
+					}
 				const header = document.getElementById('recommenderHeader');
                 const recommenderResultsDiv = document.getElementById("recommenderResults");
                 recommenderResultsDiv.innerHTML = '';
@@ -684,10 +702,6 @@
                     for (const match of result.matches) {
                         const clauseDiv = document.createElement("div");
                         clauseDiv.classList.add("clause-pseudo-wrapper");
-                        
-                        // NOTE: Using placeholder values for score_category and score_label as they may not be in the API response.
-                        const scoreCategory = 'acceptable'; // Default
-                        const scoreLabel = 'Recommended'; // Default
 
                         clauseDiv.innerHTML = `
                             <div class="clause-wrapper">
