@@ -385,6 +385,42 @@
 		color: #444;
 		margin: 0.5em 0 1em;
 		}
+
+		.risk-list {
+		list-style: none;
+		margin: 1em 0;          /* gives space above & below the list */
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5em;             /* space between pills */
+		}
+
+		/* 2. Style each risk as a pill */
+		.risk-list li {
+		background: #F5F6FC;    /* matching your result block background */
+		border-radius: 4px;
+		padding: 0.3em 0.6em;
+		font-weight: 500;
+		color: #1C2B58;         /* same text colour as your results */
+		}
+
+		.risk-banner {
+		background-color: #d7288b;
+		border-radius: 8px;
+		padding: 1.5em;
+		margin: 2em 0;           
+		color: #fff;              
+		}
+
+		/* 2. Make the pills stand out on the pink background */
+		.risk-banner .risk-list li {
+		background: #fff;      
+		color: #1C2B58;         
+		}
+
+		#recommenderHeader {
+			margin-top: 2em;         
+			}
 	</style>
 
 </head>
@@ -682,14 +718,14 @@
 				if (uniqueRisks.length) {
 					const risksStr = uniqueRisks.join(', ');
 					const riskBanner = document.createElement("div");
-					riskBanner.classList.add("border-section");
+					riskBanner.classList.add("risk-banner");
 					riskBanner.innerHTML = `
-						<h2>Some clauses recommended to help protect against</h2>
-						<p style="font-size:1.5em; font-weight:bold; margin:0.5em 0;">
-						${risksStr}
-						</p>
+						<h2>The suggested clauses below are designed to protect against the following risks: </h2>
+						<ul class="risk-list">
+							${uniqueRisks.map(r => `<li>${r.replace(/-/g,' ')}</li>`).join('')}
+						</ul>
 						<p>This result suggests you <strong>could</strong> be liable for these risks.</p>
-					`;
+						`;
 					resultDiv.insertBefore(riskBanner, detectionDiv);
 					}
 				const header = document.getElementById('recommenderHeader');

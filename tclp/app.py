@@ -73,7 +73,6 @@ print("[INFO] Loading model and data...")
 tokenizer, d_model, c_model, names, docs, final_df = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
 clause_tags = pd.read_excel(CLAUSE_TAGS)
 risk_df = pd.read_csv(RISK_INDICATORS)
-final_df = final_df.merge(risk_df, on="Title", how="left")
 with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
 umap_model = joblib.load(UMAP_MODEL)
@@ -306,6 +305,9 @@ async def find_clauses(file: UploadFile = File(...)):
         )
         response_text = retry.choices[0].message.content
         df_response = utils.parse_response(response_text)
+        
+    #find the clause names in the risk_df
+    df_response = utils.get_risk_label(df_response, risk_df)
 
     return {
         "matches": [
@@ -362,3 +364,8 @@ def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     if not os.path.exists(INDEX_PATH):
         raise RuntimeError(f"{INDEX_PATH} not found")
     return FileResponse(INDEX_PATH, media_type="text/html")
+
+# --- Run with Uvicorn ---
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8001)

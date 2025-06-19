@@ -1092,3 +1092,16 @@ def format_classification_result(name, result_json, risk_labels):
             row[label] = "1"  # mark as positive
 
     return row
+
+def get_risk_label(response_df, risk_df):
+    for name in response_df['Clause Name']:
+        #find the name in risk_df 
+        if name in risk_df['Title'].values:
+            risk_label = risk_df[risk_df['Title'] == name]['combined_labels'].values[0]
+            #add this to the response_df
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = risk_label
+            print(f"Clause '{name}' found in risk categories with label: {risk_label}.")
+        else:
+            print(f"Clause '{name}' not found in risk categories.")
+            
+    return response_df
