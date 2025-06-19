@@ -166,6 +166,12 @@
 		font-size: 12px;
 		z-index: 100;
 	  }
+	  .clause-justification {
+		font-size: 0.9em;
+		color: #444;
+		margin: 0.5em 0 1em;
+		}
+   
 	  .clause-wrapper:hover .confidence-indicator {
 		background: #FFF;
 	  }
@@ -304,112 +310,97 @@
 		</div>
 
 		<div id="results"></div>
+		<div id="loadingOverlay" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    ">
+      <div style="font-size:1.5em; color:#20305e;">Loading… please wait</div>
+    </div>
 		<div id="clauseDetails" style="display: none;"></div>
 
-		<script>
-	document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-			e.preventDefault(); // Prevent form from reloading the page
+	<script>
+  const form = document.getElementById("uploadForm");
+  const loading = document.getElementById("loadingOverlay");
 
-			try {
-				const formData = new FormData();
-				const fileInput = document.getElementById("file");
-				const method = document.getElementById("method").value;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loading.style.display = "flex";
 
-				if (fileInput.files.length === 0) {
-					alert("Please upload a file.");
-					return;
-				}
+    try {
+      const fileInput = document.getElementById("file");
+      if (!fileInput.files.length) {
+        alert("Please upload a file.");
+        return;
+      }
 
-				formData.append("file", fileInput.files[0]);
-				formData.append("method", method);
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      formData.append("method", document.getElementById("method").value);
 
-				const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      const baseUrl = `${location.protocol}//${location.host}`;
+      const response = await fetch(`${baseUrl}/find_clauses/`, {
+        method: "POST",
+        body: formData
+      });
 
-				const response = await fetch(`${baseUrl}/find_clauses/`, {
-					method: "POST",
-					body: formData,
-				});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`);
-				}
+      const result = await response.json();
+      renderResults(result.matches);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. See console for details.");
+    } finally {
+      loading.style.display = "none";
+    }
+  });
 
-				const result = await response.json();
-				const resultsDiv = document.getElementById("results");
-				const preResults = document.getElementById("preResults");
-				const statusExplainer = document.getElementById("statusExplainer");
-				const guideReccomendations = document.getElementById("guideReccomendations");
+  async function renderResults(matches) {
+    const resultsDiv = document.getElementById("results");
+    const preResults = document.getElementById("preResults");
+    const statusExplainer = document.getElementById("statusExplainer");
+    const guideReccomendations = document.getElementById("guideReccomendations");
 
-				resultsDiv.innerHTML = "<h2>Based on your contract, the 3 most relevant clauses are:</h2>";
-				preResults.classList.add("hidden");
-				statusExplainer.classList.remove("hidden");
-			   guideReccomendations.classList.remove("hidden");
+    preResults.classList.add("hidden");
+    statusExplainer.classList.remove("hidden");
+    guideReccomendations.classList.remove("hidden");
 
-			   for (const match of result.matches) {
-					// Fetch and display each clause text immediately
-					const clauseText = await fetch_clause_text(match.name);
+    resultsDiv.innerHTML = "<h2>Based on your contract, the 3 most relevant clauses are:</h2>";
 
-					const clauseDiv = document.createElement("div");
-					clauseDiv.classList.add("clause-pseudo-wrapper");
+    for (const match of matches) {
+      const clauseText = await fetch_clause_text(match.name);
 
-					// Determine the match level based on the score
-					let matchLevel = "";
-					let signalClass = "";
-					if (match.score > 0.91) {
-						matchLevel = "Very good match";
-						signalClass = "very-good";
-					} else if (match.score > 0.89) {
-						matchLevel = "Good match";
-						signalClass = "good";
-					} else if (match.score > 0.82) {
-						matchLevel = "Acceptable match";
-						signalClass = "acceptable";
-					} else {
-						matchLevel = "Could Consider";
-						signalClass = "could-consider";
-					}
+      const clauseDiv = document.createElement("div");
+      clauseDiv.classList.add("clause-pseudo-wrapper");
 
-					// Create the score box
-					const scoreBox = document.createElement("span");
-					scoreBox.classList.add("confidence-indicator");
-					scoreBox.innerHTML = `
-						<span class='signal ${signalClass}'></span>${matchLevel} (${match.score.toFixed(4)})
-					`;
+      const titleEl = document.createElement("h4");
+      titleEl.textContent = match.name;
+      clauseDiv.appendChild(titleEl);
 
-					// Add the clause text as rendered HTML
-					const text = document.createElement("div");
-					text.innerHTML = clauseText; // Use innerHTML to render HTML correctly
+      const reasonEl = document.createElement("p");
+      reasonEl.classList.add("clause-justification");
+      reasonEl.textContent = match.reason;
+      clauseDiv.appendChild(reasonEl);
 
-					// Append score box and text to clause container
-					clauseDiv.appendChild(scoreBox);
-					clauseDiv.appendChild(text);
+      resultsDiv.appendChild(clauseDiv);
+    }
+  }
 
-					// Append the clause container to the results
-					resultsDiv.appendChild(clauseDiv);
-				}
-			} catch (error) {
-				console.error("Error during fetch:", error);
-				alert("An error occurred. Check the console for more details.");
-			}
-		});
+  async function fetch_clause_text(clauseName) {
+    const baseUrl = `${location.protocol}//${location.host}`;
+    const res = await fetch(`${baseUrl}/clause/${clauseName}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching clause`);
+    const { text } = await res.json();
+    return text;
+  }
+</script>
 
-			async function fetch_clause_text(clauseName) {
-				try {
-					const baseUrl = `${window.location.protocol}//${window.location.host}`;
-
-					const response = await fetch(`${baseUrl}/clause/${clauseName}`);
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					const result = await response.json();
-					return result.text;
-				} catch (error) {
-					console.error("Error fetching clause:", error);
-					alert("An error occurred while fetching the clause text.");
-					return "Unable to fetch clause text.";
-				}
-			}
-		</script>
 
 		<div id="guideReccomendations" class="border-section hidden">
 		  <h2>Learn how to prepare for, and implement these clauses</h2>

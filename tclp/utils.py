@@ -1,4 +1,5 @@
 #imports 
+import json
 import os
 import random
 import re
@@ -1000,6 +1001,33 @@ def prepare_clause_tags(clause_tags, final_df):
     clause_tags['PrimaryTag'] = clause_tags['Tag'].apply(most_common_tag)
 
     return clause_tags
+
+def parse_response(response_text):
+    """
+    Parses a JSON-formatted LLM response, optionally wrapped in Markdown code fences.
+    Returns a list of clauses with 'Clause Name' and 'Reasoning'.
+    """
+    if not response_text.strip():
+        raise ValueError("Empty response text")
+
+    # Remove surrounding triple backticks or Markdown code fences if present
+    response_text = response_text.strip()
+    if response_text.startswith("```"):
+        response_text = re.sub(r"^```(?:json)?\s*", "", response_text)
+        response_text = re.sub(r"\s*```$", "", response_text)
+
+    try:
+        clauses = json.loads(response_text)
+        if not isinstance(clauses, list):
+            raise ValueError("Expected a list of clause dictionaries.")
+        df = pd.DataFrame(clauses)
+        for c in clauses:
+            if not all(k in c for k in ["Clause Name", "Reasoning"]):
+                raise ValueError("Missing expected keys in clause object.")
+        return df[["Clause Name", "Reasoning"]]
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format: {e}")
+
 
 # Risk utils#
 #-------------------------------------------------------------------#
