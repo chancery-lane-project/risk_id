@@ -361,4 +361,4 @@ def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
 # --- Run with Uvicorn ---
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=9000, reload=True)

@@ -367,10 +367,16 @@
         margin-bottom: 20px;
         border-radius: 5px;
     }
-	 #recommenderResults h2,
-	  .govuk-form-group h2 {
-		  margin-bottom: 0.5em;
-	  }
+	 #recommenderResults {
+        border: none;
+        padding: 0;
+        margin: 0;
+        }
+
+	#recommenderPrompt p {
+	margin-bottom: 1.5em;  /* space below the paragraph */
+	}
+
 	  .clause-pseudo-wrapper {
 		position: relative;
 	  }
@@ -590,32 +596,34 @@
 				const scrollButton = isLowConfidence ? "" : `<a class='cfc-button' href='#' onclick="scrollToHighlightedText(event, 'first-highlight')">Skip to climate aligned text</a>`;
 				
                 resultDiv.innerHTML = `
-					<h2>Result for your contract</h2>
-					<div class="detection-result single">
-						<div class='result-blk ${classKey}'>
-							<strong>It is ${classification}</strong>
-							<span class='desc'>that this contract contains climate aligned clauses.</span>
-							<a data-fancybox data-src='${viewLinkId}' href='#'>${viewLinkText}</a>
-						</div>
-					</div>
+                    <div id = "detectionSummary">
+					    <h2>Result for your contract</h2>
+					    <div class="detection-result single">
+						    <div class='result-blk ${classKey}'>
+							    <strong>It is ${classification}</strong>
+							    <span class='desc'>that this contract contains climate aligned clauses.</span>
+							    <a data-fancybox data-src='${viewLinkId}' href='#'>${viewLinkText}</a>
+						    </div>
+					    </div>
 
-					<div id="${contentBlockId}" class="contract-listing hidden">
-						<h1>Original contract text</h1>
-						${scrollButton}
-						<div class='highlighted-text-wrapper'>
-							${highlight}
-						</div>
-						<button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
-					</div>
+					    <div id="${contentBlockId}" class="contract-listing hidden">
+						    <h1>Original contract text</h1>
+						    ${scrollButton}
+						    <div class='highlighted-text-wrapper'>
+							    ${highlight}
+						    </div>
+						    <button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
+					    </div>
 
                     <!-- New Section: Prompt for Recommender -->
                     <div id="recommenderPrompt" class="border-section">
-                        <h2>Make your contract more climate-aligned</h2>
+                        <h2>⚠️ You may be at risk for climate liability</h2>
                         <p>Based on your contract, we can suggest specific clauses to improve its climate alignment.</p>
-                        <button id="startRecommenderBtn" class="cfc-button">Find relevant clauses</button>
+                        <button id="startRecommenderBtn" class="cfc-button">Continue to find relevant clauses</button>
                     </div>
 
                     <!-- Placeholders for Recommender results and explainers -->
+                    <h2 id="recommenderHeader" class="hidden">Based on your contract, the 3 most relevant clauses to help avoid climate-related risk are:</h2>
                     <div id="recommenderResults"></div>
                     <div id="recommenderExplainers" class="hidden"></div>
 				`;
@@ -635,6 +643,7 @@
 
         // 2. Function to run the Recommender when its button is clicked
         async function runRecommender() {
+            document.getElementById('recommenderPrompt').style.display = 'none';
             if (!uploadedFile) {
                 showErrorBanner("Could not find the uploaded file to run the recommender.");
                 return;
@@ -659,9 +668,17 @@
 
                 const result = await response.json();
 
+				document
+				.getElementById('recommenderHeader')
+				.classList.remove('hidden');
+
                 // --- Render Recommender Results ---
+                const detectionDiv = document.getElementById("detectionSummary");
+				const header = document.getElementById('recommenderHeader');
                 const recommenderResultsDiv = document.getElementById("recommenderResults");
-                recommenderResultsDiv.innerHTML = `<h2 class="border-section">Based on your contract, the 3 most relevant clauses are:</h2>`;
+                recommenderResultsDiv.innerHTML = '';
+                resultDiv.insertBefore(header, detectionDiv);
+				resultDiv.insertBefore(recommenderResultsDiv, detectionDiv);
 
                 if (result.matches && result.matches.length > 0) {
                     for (const match of result.matches) {
