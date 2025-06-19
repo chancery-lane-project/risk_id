@@ -816,7 +816,7 @@ def getting_started(model_path, clause_folder, clause_html):
     model_path = os.path.abspath(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
     model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
-    model = model.base_model
+    classifier_model = model.base_model
     #this is specific to embeddings; we have now lost the classification head
 
     documents, file_names, _ = load_clauses(clause_folder)
@@ -827,7 +827,7 @@ def getting_started(model_path, clause_folder, clause_html):
     final_df
     names, docs = rebuild_documents(final_df)
     
-    return tokenizer, model, names, docs, final_df
+    return tokenizer, model, classifier_model, names, docs, final_df
 
 def combine_title_and_text(row, title_to_document):
     title = row['Clause']
