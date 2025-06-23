@@ -11,11 +11,11 @@ import torch
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
-from starlette.status import HTTP_401_UNAUTHORIZED  # Import the status code
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 import utils
 
@@ -62,6 +62,7 @@ CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
 RISK_INDICATORS = "data/risk_categorization_results.csv"
+RISK_TAXONOMY = 'data/risk_taxonomy.xlsx'
 INDEX_PATH = "index.html"
 CLUSTERING_MODEL = 'models/clustering_model.pkl'
 UMAP_MODEL = 'models/umap_model.pkl'
@@ -75,6 +76,9 @@ clause_tags = pd.read_excel(CLAUSE_TAGS)
 risk_df = pd.read_csv(RISK_INDICATORS)
 with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
+risk_taxonomy = pd.read_excel(RISK_TAXONOMY)
+taxonomy_html = risk_taxonomy.to_html(index=False, classes="table table-sm")
+utils.save_file("risk_taxonomy.html", taxonomy_html)
 umap_model = joblib.load(UMAP_MODEL)
 device = torch.device("cpu")
 
@@ -317,7 +321,8 @@ async def find_clauses(file: UploadFile = File(...)):
                 "risks": row["combined_labels"],
             }
             for _, row in df_response.iterrows()
-        ]
+        ],
+        "risk_taxonomy_url": "/output/risk_taxonomy.html"
     }
 
 def normalize_title(s: str) -> str:
@@ -357,6 +362,15 @@ def get_clause(clause_name: str):
 
     idx = names.index(full_title)
     return {"name": full_title, "text": docs[idx]}
+
+@app.get("/risk_taxonomy", response_class=HTMLResponse)
+async def serve_risk_taxonomy():
+    """
+    Return the risk taxonomy as an HTML table so the frontend can show it in a modal.
+    """
+    # risk_taxonomy is already loaded at startup
+    html = risk_taxonomy.to_html(index=False, classes="table table-sm")
+    return html
 
 # --- Serve Frontend ---
 @app.get("/", response_class=FileResponse)

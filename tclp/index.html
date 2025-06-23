@@ -97,6 +97,16 @@
 	  .cfc-button:hover {
 		background:#a80771 !important;
 	  }
+	  .taxonomy-btn {
+		background-color: #a80771 !important;
+		color: #fff !important;
+		/* if you need a border, add it here */
+		}
+		.taxonomy-btn:hover {
+		/* keep it locked on hover‐look, too */
+		background-color: #a80771 !important;
+		color: #fff !important;
+		}
 	  .border-section {
 		margin-top: 40px;
 		padding: 20px 0 0;
@@ -686,12 +696,13 @@
             }
 
             document.getElementById('recommenderPrompt').classList.add('hidden');
-            const loadingInterval = showLoading("Finding recommended clauses (this may take a moment)...");
+            const loadingInterval = showLoading("Finding recommended clauses (this may take a minute or two)...");
 
             const formData = new FormData();
             formData.append("file", uploadedFile);
             
             const baseUrl = `${window.location.protocol}//${window.location.host}`;
+  			const taxonomyUrl = `${baseUrl}/risk_taxonomy`;
 
             try {
                 // This fetch is for the RECOMMENDER
@@ -716,18 +727,27 @@
 
 				const detectionDiv = document.getElementById("detectionSummary");
 				if (uniqueRisks.length) {
-					const risksStr = uniqueRisks.join(', ');
 					const riskBanner = document.createElement("div");
 					riskBanner.classList.add("risk-banner");
 					riskBanner.innerHTML = `
-						<h2>The suggested clauses below are designed to protect against the following risks: </h2>
-						<ul class="risk-list">
-							${uniqueRisks.map(r => `<li>${r.replace(/-/g,' ')}</li>`).join('')}
-						</ul>
-						<p>This result suggests you <strong>could</strong> be liable for these risks.</p>
-						`;
+					<h2>The suggested clauses below are designed to protect against the following risks:</h2>
+					<ul class="risk-list">
+						${uniqueRisks.map(r => `<li>${r.replace(/-/g,' ')}</li>`).join('')}
+					</ul>
+					<h2>This result suggests you <strong>COULD</strong> be liable for these risks.</h2>
+					<a
+						data-fancybox
+						data-type="iframe"
+						data-src="${taxonomyUrl}"
+						href="javascript:;"
+						class="cfc-button cfc-button--secondary taxonomy-btn"
+						style="margin-top:1em; display:inline-block;"
+					>
+						View full risk taxonomy
+					</a>
+					`;
 					resultDiv.insertBefore(riskBanner, detectionDiv);
-					}
+				}
 				const header = document.getElementById('recommenderHeader');
                 const recommenderResultsDiv = document.getElementById("recommenderResults");
                 recommenderResultsDiv.innerHTML = '';
