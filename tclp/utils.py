@@ -1045,14 +1045,14 @@ def classify_clause(clause_text, taxonomy_df, given_prompt, client, model="qwen/
     system_prompt = format_taxonomy_prompt(taxonomy_df, given_prompt)
     
     user_prompt = f"""Clause:
-\"\"\"{clause_text}\"\"\"
+        \"\"\"{clause_text}\"\"\"
 
-Which risk categories does this clause help mitigate?
-Respond in this JSON format:
-{{
-  "labels": ["label1", "label2", ...],
-  "justification": "Explain why these labels apply to this clause."
-}}"""
+        Which risk categories does this clause help mitigate?
+        Respond in this JSON format:
+        {{
+        "labels": ["label1", "label2", ...],
+        "justification": "Explain why these labels apply to this clause."
+        }}"""
 
     response = client.chat.completions.create(
         model=model,
