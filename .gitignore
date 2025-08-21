@@ -10,3 +10,4 @@ tclp/models/CC_BERT/CC_model_detect/
 tclp/clause_detector/notebooks/artifacts/
 .history/
 tclp/models/artifacts/
+.env

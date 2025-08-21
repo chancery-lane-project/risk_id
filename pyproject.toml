@@ -141,6 +141,9 @@ xgboost = "^3.0.0"
 hdbscan = "^0.8.40"
 fuzzywuzzy = "^0.18.0"
 rapidfuzz = "^3.13.0"
+python-dotenv = "^1.1.0"
+bertopic = "^0.17.3"
+rich = "^14.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Check if your contracts are climate aligned</title>
+	<title>Climate Aligned Contract Checker & Recommender</title>
 	<link rel="stylesheet" href="https://chancerylaneproject.org/wp-content/themes/contracts-for-change/dist/css/main.css?v=1.2.148">
 	<link rel='stylesheet' id='wp-block-library-css' href='https://chancerylaneproject.org/wp-includes/css/dist/block-library/style.min.css?ver=6.7.1' media='all' />
 	<link rel='stylesheet' id='cfc-style-css' href='https://chancerylaneproject.org/wp-content/themes/contracts-for-change/style.css?ver=1.0.2' media='all' />
@@ -90,18 +90,30 @@
 		padding: 13px 30px;
 		color: #FFF  !important;
 		background: #d7288b !important;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
 	  }
 	  .cfc-button:hover {
 		background:#a80771 !important;
 	  }
+	  .taxonomy-btn {
+		background-color: #a80771 !important;
+		color: #fff !important;
+		/* if you need a border, add it here */
+		}
+		.taxonomy-btn:hover {
+		/* keep it locked on hover‐look, too */
+		background-color: #a80771 !important;
+		color: #fff !important;
+		}
 	  .border-section {
 		margin-top: 40px;
-		padding: 10px 0 0;
+		padding: 20px 0 0;
 		float: left;
 		clear: both;
-	  }
-	  #clauseDetails {
-
+      width: 100%;
+      border-top: 1px solid #CCC;
 	  }
 	  .clause-wrapper {
 		border: 1px solid rgb(211, 213, 227);
@@ -168,16 +180,10 @@
 		top: 6px;
 		left: 8px;
 	  }
-	  .confidence-indicator .signal.very-good {
-		background: green;
-	  }
-	  .confidence-indicator .signal.good {
-		background: darkmagenta;
-	  }
-	  .confidence-indicator .signal.acceptable {
-		background: orange;
-	  }
-
+	  .confidence-indicator .signal.very-good { background: green; }
+	  .confidence-indicator .signal.good { background: darkmagenta; }
+	  .confidence-indicator .signal.acceptable { background: orange; }
+    .confidence-indicator .signal.could-consider { background: red; }
 
 	  .detection-result .confidence-indicator {
 		position: relative;
@@ -205,13 +211,15 @@
 	  }
 	  button.custom-btn {
 		border: 1px solid rgb(211, 213, 227);
-		padding: 0 20px 20px;
+		padding: 20px;
 		border-radius: 8px;
 		cursor: pointer;
 		background: #F5F6FC;
 		color: #1c2b58;
-		max-width: 170px;
-		margin-right: 20px;
+		width: 100%;
+        max-width: 250px;
+        display: block;
+        margin: 0 auto;
 	  }
 	  button.custom-btn:hover {
 		background: #dbddf3;
@@ -219,6 +227,7 @@
 	  button.custom-btn span {
 		display: block;
 		font-weight: bold;
+        margin-top: 10px;
 	  }
 	button.custom-btn:focus-within {
 	  outline: 2px solid #ffdd00;
@@ -243,28 +252,6 @@
 	  display: block;
 	font-size: 1.3em;
 	}
-	.detection-result.multiple {
-	  display: block;
-	  width: 100%;
-	  float: left;
-	}
-	.detection-result.multiple .result-blk {
-	  display: block;
-	  margin: 0 0 15px 0;
-	  float: left;
-	  width: 100%;
-	  border-radius: 3px;
-	  border: 1px solid rgb(211, 213, 227);
-	}
-	.detection-result.multiple .result-blk span {
-	}
-	.detection-result.multiple .result-blk span.desc {
-		color: #0B183F;
-		margin-bottom: 5px;
-	}
-	.detection-result.multiple .result-blk span.percentage {
-	font-weight: bold;
-	}
 	.detection-result .result-blk a {
 	  color: rgb(33, 59, 198) !important;
 	  font-size: 15px;
@@ -273,26 +260,11 @@
 		  display: block;
 	margin: 10px 0 0;
 	}
-	.detection-result .result-blk.cat0 {
-	border-left: 6px solid #d05c15; /* for CAT0: "unlikely" */
-	color: #d05c15;
-	}
-	.detection-result .result-blk.cat1 {
-	border-left: 6px solid #ac8500; /* for CAT1: "possible" */
-	color: #ac8500;
-	}
-	.detection-result .result-blk.cat2 {
-	border-left: 6px solid #7bae0c; /* for CAT2: "likely" */
-	color: #7bae0c;
-	}
-	.detection-result .result-blk.cat3 {
-	border-left: 6px solid #0b9216; /* for CAT3: "very likely" */
-	color: #0b9216;
-	}
-	.detection-result .result-blk.unknown {
-	  border-left: 6px solid #D70000;
-	  color: #D70000;
-	}
+	.detection-result .result-blk.cat0 { border-left: 6px solid #d05c15; color: #d05c15; }
+	.detection-result .result-blk.cat1 { border-left: 6px solid #ac8500; color: #ac8500; }
+	.detection-result .result-blk.cat2 { border-left: 6px solid #7bae0c; color: #7bae0c; }
+	.detection-result .result-blk.cat3 { border-left: 6px solid #0b9216; color: #0b9216; }
+	.detection-result .result-blk.unknown { border-left: 6px solid #D70000; color: #D70000; }
 	.govuk-form-group {
 	  background: #f9f8f8;
 	padding: 15px;
@@ -315,25 +287,6 @@
 	.contract-listing h1 {
 	  margin: 0 0 20px;
 	}
-	.contract-listing ul {
-	  margin: 0;
-	  list-style: none;
-	  padding: 0;
-	  font-weight: bold;
-	}
-   .contract-listing ul li {
-	  border: 1px solid #e4e4e4;
-	  padding: 10px;
-	  font-size: 15px;
-	  margin-bottom: 11px;
-	  background: #f9f8f8;
-	  border-radius: 5px;
-   }
-	.contract-listing ul li a {
-	  font-size: 15px;
-	  float: right;
-	  font-weight: normal;
-	}
 	.fancybox__backdrop {
 	  background: #0c17379c;
 	  backdrop-filter: blur(10px);
@@ -343,35 +296,6 @@
 	}
 	.contract-listing .cfc-button {
 	  margin-top: 10px;
-	}
-	.contact-text-preview {
-	  display: block;
-	  background: #f4f4f4;
-	  font-family: monospace;
-	  padding: 25px;
-	  margin: 0 0 25px;
-	}
-	.contact-text-preview p {
-	  margin-bottom: 1em;
-	}
-	.f-button.is-close-btn {
-	  top: 30px !important;
-	  right: calc(50% - 295px);
-	  background: #121f43 !important;
-	  opacity: 1 !important;
-	  border-radius: 100% !important;
-	  position: fixed !important;
-	}
-	.hidden {
-		display: none;
-	}
-	.toggle-arrow {
-	  display: inline-block;
-	  margin-right: 5px;
-	  cursor: pointer;
-	  transform-origin: center;
-	  transition: transform 0.2s ease;
-	  font-size: 13px;
 	}
 	.highlighted-text-wrapper {
 	  padding: 1.5em;
@@ -398,59 +322,8 @@
 	  background: #121f43 !important;
 	  color: #FFF !important;
 	}
-	.toggle-link {
-	  display: block;
-	  cursor: pointer;
-	  margin: 10px 0;
-	}
-	.doc-list {
-	  border-left: 4px solid darkgrey;
-	  color: #1c2b58;
-	  margin: 10px 6px;
-	  padding-left: 15px;
-	}
-	.doc-list ul {
-	  margin-bottom: 0;
-	  line-height: 1;
-	  padding-left: 13px;
-	  font-size: 15px;
-	}
-	.doc-list ul li {
-	  margin: 0;
-	  padding: 5px 0;
-	}
-	.report-findings {
-	  display: block;
-	  width: 100%;
-	  float: left;
-	  margin: 20px 0 0;
-	  background: #EFF2F6;
-	  border: 1px solid #DEE5EC;
-	  border-radius: 10px;
-	  padding: 15px 20px;
-	}
-	.report-findings .report-findings-inner {
-	  border: 1px solid #DEE5EC;
-	  width: calc(100% + 80px);
-	  padding: 30px 30px 30px 50%;
-	  background: #FFF url(https://chancerylaneproject.org/wp-content/uploads/2024/12/tool-vis.png) no-repeat left top;
-	  background-size: contain;
-	  border-radius: 10px;
-	  margin-left: -40px;
-	  box-shadow: 0px 3px 0px -1px #0000000f;
-	}
-	.report-findings .report-findings-inner h3 {
-	  margin: 0 0 10px;
-	}
-	.report-findings .report-findings-inner a.cfc-button {
-	  margin: 12px 0 0;
-	  display: inline-block;
-	  padding: 10px 15px;
-	  font-size: 13px;
-	}
-	.report-findings .report-findings-inner p {
-	  font-size: 15px;
-	  line-height: 1.4;
+	.hidden {
+		display: none;
 	}
 	.grid-count--2 {
 		grid-template-columns: repeat(2, 1fr);
@@ -465,16 +338,8 @@
 		font-size: 15px;
 		line-height: 20px;
 	  }
-	#guideReccomendations {
-	  margin-top: 20px;
-	}
-	.govuk-phase-banner {
-	  background: #ffdd00;
-	}
-	.govuk-phase-banner__content {
-	  max-width: 600px;
-	  margin: 0 auto;
-	}
+	.govuk-phase-banner { background: #ffdd00; }
+	.govuk-phase-banner__content { max-width: 600px; margin: 0 auto; }
 	.govuk-phase-banner__content__tag {
 	  text-transform: uppercase;
 	  font-weight: bold;
@@ -483,52 +348,91 @@
 	  margin: 4px 10px 0 0;
 	  font-size: 13px;
 	}
+    .loading {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    .progress-bar {
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 10px 0 0;
+    }
+    .progress-bar-inner {
+      height: 15px;
+      background-color: #d7298a;
+      width: 0%;
+      transition: width 0.5s;
+    }
+    .error-banner {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+    }
+	 #recommenderResults {
+        border: none;
+        padding: 0;
+        margin: 0;
+        }
+
+	#recommenderPrompt p {
+	margin-bottom: 1.5em;  /* space below the paragraph */
+	}
+
+	  .clause-pseudo-wrapper {
+		position: relative;
+	  }
+	  .clause-justification {
+		font-size: 0.9em;
+		color: #444;
+		margin: 0.5em 0 1em;
+		}
+
+		.risk-list {
+		list-style: none;
+		margin: 1em 0;          /* gives space above & below the list */
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5em;             /* space between pills */
+		}
+
+		/* 2. Style each risk as a pill */
+		.risk-list li {
+		background: #F5F6FC;    /* matching your result block background */
+		border-radius: 4px;
+		padding: 0.3em 0.6em;
+		font-weight: 500;
+		color: #1C2B58;         /* same text colour as your results */
+		}
+
+		.risk-banner {
+		background-color: #d7288b;
+		border-radius: 8px;
+		padding: 1.5em;
+		margin: 2em 0;           
+		color: #fff;              
+		}
+
+		/* 2. Make the pills stand out on the pink background */
+		.risk-banner .risk-list li {
+		background: #fff;      
+		color: #1C2B58;         
+		}
+
+		#recommenderHeader {
+			margin-top: 2em;         
+			}
 	</style>
 
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-		}
-		.container {
-			max-width: 600px;
-			margin: 0 auto;
-		}
-		input[type="file"] {
-			margin: 10px 0;
-		}
-		.loading {
-		  margin-top: 20px;
-		  padding: 20px;
-		  border: 1px solid #ccc;
-		  background-color: #f9f9f9;
-		  border-radius: 10px;
-		  font-weight: bold;
-		}
-		.progress-bar {
-			width: 100%;
-			background-color: #e0e0e0;
-			border-radius: 5px;
-			overflow: hidden;
-			margin: 10px 0 0;
-		}
-		.progress-bar-inner {
-		  height: 15px;
-		  background-color: #d7298a;
-		  width: 30%;
-		  transition: width 0.5s;
-		}
-		.hidden {
-			display: none;
-		}
-		.error-banner {
-			background-color: #f8d7da;
-			color: #721c24;
-			border: 1px solid #f5c6cb;
-			padding: 10px;
-			margin-bottom: 20px;
-			border-radius: 5px;
-		}
-	</style>
 </head>
 <body>
   <div class="govuk-phase-banner">
@@ -547,10 +451,9 @@
   </div>
 	<div class="center-wrapper">
 	  <div class="section">
-		<h1>Check if your contracts are climate aligned</h1>
+		<h1>Build climate resilience into your contracts</h1>
 
-
-		<!-- Display error message if there is an error in the query params -->
+		<!-- Display error message if there is an error -->
 		<div id="errorBanner" class="error-banner hidden">
 			<p id="errorMessage"></p>
 		</div>
@@ -574,435 +477,329 @@
 			  </svg>
 			  <span>Check a single contract</span>
 			</button>
-
-			<button class="custom-btn" id="selectFolder">
-			  <svg width="114" height="109" viewBox="0 0 114 109" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path fill-rule="evenodd" clip-rule="evenodd" d="M42.8409 91.8473C33.6144 88.0812 27.2381 79.7718 23.0959 71.4655C19.3815 64.0171 21.4534 56.2808 21.1883 48.4278C20.9019 39.9444 15.6914 29.8379 21.4833 23.6989C27.2761 17.559 39.0142 20.8331 48.23 19.7657C56.7627 18.7773 64.9578 14.7481 73.3954 17.6859C82.0301 20.6924 87.9315 28.1286 92.8527 35.3028C97.6822 42.3433 101.12 50.071 100.999 57.9263C100.876 65.8478 97.4633 73.054 92.1773 78.924C86.8202 84.8729 79.5004 88.8894 71.1449 91.0781C62.0814 93.4522 52.0554 95.6085 42.8409 91.8473Z" fill="#DADDF3"/>
-				<path fill-rule="evenodd" clip-rule="evenodd" d="M57.4095 30.3576H87.7859C90.6694 30.3866 92.9913 32.7146 93 35.584V77.7679C92.9971 80.6373 90.6723 82.971 87.7859 83H31.2141C28.3277 82.971 26.0029 80.6373 26 77.7679V31.2321C26.0029 28.3483 28.3509 26.0087 31.2519 26H51.8318C53.243 25.9942 54.5727 26.6486 55.4223 27.772L57.4125 30.3577L57.4095 30.3576Z" fill="white"/>
-				<path fill-rule="evenodd" clip-rule="evenodd" d="M90.2358 39.1569V35.5839C90.23 34.2346 89.1417 33.1372 87.7859 33.1083H59.5189L63.153 37.8453C63.4789 38.2883 64.0026 38.5431 64.5526 38.5257H87.7857C88.6557 38.5257 89.5111 38.7429 90.2734 39.1569L90.2358 39.1569ZM57.4095 30.3576H87.7859C90.6694 30.3866 92.9913 32.7146 93 35.584V77.7679C92.9971 80.6373 90.6723 82.971 87.7859 83H31.2141C28.3277 82.971 26.0029 80.6373 26 77.7679V31.2321C26.0029 28.3483 28.3509 26.0087 31.2519 26H51.8318C53.243 25.9942 54.5727 26.6486 55.4223 27.772L57.4125 30.3577L57.4095 30.3576ZM55.6899 32.6392L60.9709 39.5044C61.8205 40.6249 63.1502 41.2822 64.5614 41.2764H87.7863C89.1567 41.2851 90.2653 42.3882 90.274 43.752V77.7682C90.2711 79.1349 89.1596 80.2438 87.7863 80.2496H31.2144C29.8411 80.2438 28.7296 79.1349 28.7267 77.7682V31.2324C28.7296 29.8657 29.8411 28.7569 31.2144 28.751H51.8323C52.3852 28.7307 52.9118 28.9913 53.2319 29.4401L55.577 32.4948C55.577 32.547 55.6527 32.5904 55.6876 32.6425L55.6899 32.6392ZM47.7206 75.3361H84.8969C85.6185 75.284 86.1801 74.6846 86.1801 73.9607C86.1801 73.2398 85.6185 72.6404 84.8969 72.5854H47.7206C46.9961 72.6404 46.4345 73.2397 46.4345 73.9607C46.4345 74.6846 46.9961 75.284 47.7206 75.3361ZM34.0687 75.3361H40.7201H40.7172C41.1013 75.3651 41.4795 75.2319 41.7617 74.9713C42.044 74.7107 42.204 74.3458 42.204 73.9607C42.204 73.5785 42.044 73.2137 41.7617 72.9502C41.4795 72.6896 41.1013 72.5593 40.7172 72.5854H34.0658C33.3442 72.6404 32.7826 73.2398 32.7826 73.9608C32.7826 74.6846 33.3442 75.284 34.0658 75.3361L34.0687 75.3361ZM83.6984 47.7857H63.0634V54.8941H83.6954L83.6984 47.7857ZM61.7159 45.0351C60.9507 45.0351 60.3309 45.6518 60.3309 46.4133V56.2725C60.3309 56.6374 60.4764 56.9877 60.7353 57.2454C60.9972 57.5031 61.3493 57.645 61.7159 57.6421H85.1032C85.8655 57.6421 86.4824 57.0283 86.4824 56.2725V46.4133C86.4853 46.0485 86.3398 45.6981 86.0809 45.4375C85.8219 45.1798 85.4698 45.0351 85.1032 45.0351L61.7159 45.0351Z" fill="#1F2B55"/>
-				<path d="M33.0807 77.1613C41.9618 77.1613 49.1613 69.9618 49.1613 61.0807C49.1613 52.1996 41.9618 45 33.0807 45C24.1996 45 17 52.1996 17 61.0807C17 69.9618 24.1996 77.1613 33.0807 77.1613Z" fill="#D7288B"/>
-				<path d="M30.8268 67.7709L25.4509 62.7237C25.1457 62.442 25.1223 61.9725 25.4274 61.6673L26.6012 60.4231C26.8829 60.1179 27.3524 60.0944 27.6576 60.3996L30.8268 63.3575C30.9677 63.4984 31.2024 63.4749 31.3198 63.3341L38.245 54.7186C38.4798 54.4369 38.8789 54.3899 39.1606 54.6247L40.6395 55.8219C40.9212 56.0567 40.9682 56.4558 40.7334 56.7375L31.9067 67.724C31.6015 68.0057 31.132 68.0526 30.8268 67.7709Z" fill="#FFFDFF"/>
-			  </svg>
-			  <span>Check a folder of contracts</span>
-			</button>
 		</div>
-
 	  </div>
 
-
-
-		<!-- Step 1: Choose "File" or "Folder" -->
-
-
-		<!-- Step 2: File Upload -->
+		<!-- Step 2: File Upload Form -->
 		<form id="uploadForm" class="hidden">
-
-		  <h2>Before you upload your contracts</h2>
+		  <h2>Before you upload your contract</h2>
 		  <ul>
 			<li>Remove any personally identifiable information</li>
 			<li>Save it as a TXT file</li>
 		  </ul>
-
-		  <h2>How your contracts are used</h2>
+		  <h2>How your contract is used</h2>
 		  <ul>
-		  <li>The content in your contracts are only used to identify climate aligned wording</li>
+		  <li>The content in your contract is used to identify climate-aligned wording and recommend relevant clauses</li>
 		  <li>Your contract is deleted immediately after it is analysed. It is not stored or used elsewhere</li>
 		  </ul>
-
 			<div class="govuk-form-group">
-			  <h2 id="uploadLabel"></h2>
+			  <h2 id="uploadLabel">Upload a single contract</h2>
 			  <label class="govuk-label" for="uploadInput">
 				Upload a file
 			  </label>
-			  <input class="govuk-file-upload" id="uploadInput" name="file" type="file" multiple>
+			  <input class="govuk-file-upload" id="uploadInput" name="file" type="file" accept=".txt">
 			</div>
-
 			<button type="submit" class="cfc-button">Continue</button>
 		</form>
 
+        <!-- Loading Indicator -->
 		<div id="loading" class="loading hidden">
-			<p>Loading your results</p>
+			<p id="loadingMessage">Loading your results...</p>
 			<div class="progress-bar">
 				<div id="progressBar" class="progress-bar-inner"></div>
 			</div>
 		</div>
-		<div id="result" class="result hidden"></div>
+
+        <!-- This div will hold all results -->
+		<div id="result"></div>
 	</div>
 
 	<script>
-		// Define CAT_LABELS globally at the top of your script
-        const CAT_LABELS = [
-            { key: "cat0", label: "unlikely" },
-            { key: "cat1", label: "possible" },
-            { key: "cat2", label: "likely" },
-            { key: "cat3", label: "very likely" },
-        ];
-
+        // --- DOM Element References ---
 		const selectFileButton = document.getElementById("selectFile");
-		const selectFolderButton = document.getElementById("selectFolder");
 		const uploadForm = document.getElementById("uploadForm");
 		const uploadLabel = document.getElementById("uploadLabel");
 		const uploadInput = document.getElementById("uploadInput");
 		const resultDiv = document.getElementById("result");
 		const loadingDiv = document.getElementById("loading");
+        const loadingMessage = document.getElementById("loadingMessage");
 		const progressBar = document.getElementById("progressBar");
 		const errorBanner = document.getElementById("errorBanner");
 		const errorMessage = document.getElementById("errorMessage");
+        const selectionStep = document.getElementById("selectionStep");
 
-		const MAX_FILE_LIMIT = 1000;
+        // --- Global State ---
+		let uploadedFile = null; // Variable to store the uploaded file for the recommender
 
-		let isFolderUpload = false;
+		// --- Helper Functions ---
 		function hideErrorBanner() {
 			errorBanner.classList.add("hidden");
 		}
 
-		function toggleDocumentList(listId) {
-			const list = document.getElementById(listId);
-			const docCount = document.querySelector(`[onclick="toggleDocumentList('${listId}')"]`);
-			const arrow = docCount.querySelector(".toggle-arrow");
-
-			if (list.classList.contains('hidden')) {
-				list.classList.remove('hidden');
-				arrow.textContent = '▼'; // Expanded state
-			} else {
-				list.classList.add('hidden');
-				arrow.textContent = '▶'; // Collapsed state
-			}
-		}
-		function renderBucket(bucketKey, bucketLabel, bucket, percentage, downloadLink) {
-			if (bucket.count === 0) {
-				return `
-					<div class="result-blk ${bucketKey}">
-						<span class="percentage">${bucket.count} contracts (${percentage}%) </span>
-						<span class="desc">are <strong>${bucketLabel}</strong> to contain climate aligned clauses</span>
-					</div>
-				`;
-			} else {
-				return `
-					<div class="result-blk ${bucketKey}">
-						<span class="percentage">${bucket.count} contracts (${percentage}%) </span>
-						<span class="desc">are <strong>${bucketLabel}</strong> to contain climate aligned clauses</span>
-						<a class="toggle-link" onclick="toggleDocumentList('${bucketKey}-list')">
-						  <span class="toggle-arrow">▶</span>View the contracts
-						</a>
-						<div id="${bucketKey}-list" class="doc-list hidden">
-							<ul>
-								${bucket.documents.map(doc => `<li>${doc}</li>`).join('')}
-							</ul>
-						</div>
-						<a href="${downloadLink}" target="_blank">Download as a zip file</a>
-					</div>
-				`;
-			}
+		function showErrorBanner(message) {
+			errorMessage.textContent = message;
+			errorBanner.classList.remove("hidden");
 		}
 
 		function scrollToHighlightedText(event, highlightId) {
 			event.preventDefault();
 			const highlightElement = document.getElementById(highlightId);
-
 			if (highlightElement) {
 				highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			}
 		}
 
-		//handle "Upload File" selection
-		selectFileButton.addEventListener("click", () => {
-			isFolderUpload = false;
-			uploadLabel.innerText = "Upload a single contract";
-			uploadInput.removeAttribute("webkitdirectory");
-			uploadInput.removeAttribute("directory");
-			uploadInput.setAttribute("accept", ".txt");
-			showUploadForm();
-			hideErrorBanner();
-		});
-
-		//handle "Upload Folder" selection
-		selectFolderButton.addEventListener("click", () => {
-			isFolderUpload = true;
-			uploadLabel.innerText = "Upload a folder of contracts";
-			uploadInput.removeAttribute("accept");
-			uploadInput.setAttribute("webkitdirectory", true);
-			uploadInput.setAttribute("directory", true);
-			showUploadForm();
-			hideErrorBanner();
-		});
-
+		// --- UI Control Functions ---
 		function showUploadForm() {
-			document.getElementById("selectionStep").classList.add("hidden");
+			selectionStep.classList.add("hidden");
 			uploadForm.classList.remove("hidden");
 		}
 
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            progressBar.style.width = "0%";
+            loadingDiv.classList.remove("hidden");
+
+            // Animate progress bar
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 10;
+                    progressBar.style.width = progress + "%";
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 400);
+            return progressInterval;
+        }
+
+        function hideLoading(intervalId) {
+            clearInterval(intervalId);
+            progressBar.style.width = "100%";
+            setTimeout(() => {
+                loadingDiv.classList.add("hidden");
+            }, 500); // Give time for the 100% animation
+        }
+
+
+		// --- Event Listeners ---
+		selectFileButton.addEventListener("click", () => {
+			showUploadForm();
+			hideErrorBanner();
+		});
+
+		// 1. Listener for the initial file upload (Detector)
 		uploadForm.addEventListener("submit", async function (event) {
 			event.preventDefault();
 
-			//hide any previously shown results and error banner
-			resultDiv.classList.add("hidden");
-			errorBanner.classList.add("hidden");
-			loadingDiv.classList.remove("hidden");
-		   selectionStep.classList.add("hidden");
-		   uploadForm.classList.add("hidden");
-			progressBar.style.width = "0%";
+			resultDiv.innerHTML = ''; // Clear previous results
+			hideErrorBanner();
+		    uploadForm.classList.add("hidden");
 
-			if (!uploadInput.files.length) {
-				alert("Please upload a file or folder.");
-				loadingDiv.classList.add("hidden");
+			if (!uploadInput.files || uploadInput.files.length === 0) {
+				showErrorBanner("Please select a file to upload.");
+				uploadForm.classList.remove("hidden");
 				return;
 			}
-
-			//check the number of files
-			if (uploadInput.files.length > MAX_FILE_LIMIT) {
-				//redirect to the home screen with an error message
-				window.location.href = '/?error=too-many-files';
-				return;
-			}
+            
+            uploadedFile = uploadInput.files[0]; // Store the file for later
 
 			const formData = new FormData();
-			for (const file of uploadInput.files) {
-				formData.append("files", file);
-			}
+			formData.append("files", uploadedFile);
+            formData.append("is_folder", "false"); // Hardcoded as per requirement
 
-			formData.append("is_folder", isFolderUpload ? "true" : "false");
-
-			//progress bar
-			let progress = 0;
-			const progressInterval = setInterval(() => {
-				if (progress < 90) {
-					progress += 10;
-					progressBar.style.width = progress + "%";
-				}
-			}, 500);
-
+            const loadingInterval = showLoading("Analysing your contract...");
 			const baseUrl = `${window.location.protocol}//${window.location.host}`;
 
 			try {
+				// This fetch is for the DETECTOR
 				const response = await fetch(`${baseUrl}/process/`, {
 					method: "POST",
 					body: formData,
 				});
 
 				if (!response.ok) {
-					loadingDiv.classList.add("hidden");
-					resultDiv.classList.remove("hidden");
-					resultDiv.innerHTML = `<p style="color: red;">Error processing your request. Please try again.</p>`;
-					return;
+                    throw new Error(`Server responded with status: ${response.status}`);
 				}
 
 				const result = await response.json();
-
+                
 				if (result.error) {
-					resultDiv.classList.remove("hidden");
-					resultDiv.innerHTML = `<p style="color: red;">${result.error}</p>`;
-					return;
+                    throw new Error(result.error);
 				}
-
-				const bucketLabels = result.bucket_labels || {
-					cat0: "unlikely",
-					cat1: "possible",
-					cat2: "likely",
-					cat3: "very likely"
-					};
-				const reverseLabels = Object.entries(bucketLabels).reduce((acc, [key, value]) => {
-				acc[value] = key;
-				return acc;
-				}, {});
-
-				clearInterval(progressInterval);
-				progressBar.style.width = "100%";
-				loadingDiv.classList.add("hidden");
-
-				if (result.error) {
-				resultDiv.classList.remove("hidden");
-				resultDiv.innerHTML = `<p style="color: red;">${result.error}</p>`;
-				return;
-				}
-
-				//results for both folder and file uploads
-
-				//Al: Buckets is the name of a dictionary that contains the count and names of the document (count and documents as variable names)
-				if (isFolderUpload) {
-					const percentages = result.percentages;
-					const links = result.download_links;
-					const buckets = result.buckets;
-
-					uploadForm.classList.add("hidden");
-					resultDiv.classList.remove("hidden");
-
-					let bucketsHtml = '';
-					for (const [bucketKey, label] of Object.entries(bucketLabels)) {
-						const bucket = buckets[label];
-						const percentage = percentages[label];
-						const downloadLink = links[`${label}_zip`];
-
-						bucketsHtml += renderBucket(bucketKey, label, bucket, percentage, downloadLink);
-					}
-
-					resultDiv.innerHTML = `
-						<h2>Result for multiple contracts</h2>
-						<div class="detection-result multiple">
-							${CAT_LABELS.map(cat => 
-							renderBucket(cat.key, cat.label, buckets[cat.label], percentages[cat.label], links[cat.label + '_zip'])
-							).join('')}
-						</div>
-
-					   <div class='report-findings'>
-						  <div class='report-findings-inner'>
-							<h3>See how your results compare to other [sectors / industries / etc]</h3>
-							<p>Similique est fuga et cumque. Voluptas voluptatem voluptas voluptatum placeat natus consequatur quas sed dolorum.</p>
-							<a href='#' class='cfc-button'>Report anonymised results</a>
-						  </div>
-					   </div>
-					`;
-				} else {
+                
+                // --- Render Detector Results ---
 				const classification = result.classification;
 				const highlight = result.highlighted_content;
-				const bucketLabels = result.bucket_labels;
+				const bucketLabels = result.bucket_labels || { cat0: "unlikely", cat1: "possible", cat2: "likely", cat3: "very likely"};
+				const reverseLabels = Object.entries(bucketLabels).reduce((acc, [key, value]) => { acc[value] = key; return acc; }, {});
 
-				uploadForm.classList.add("hidden");
-				resultDiv.classList.remove("hidden");
-
-				// Determine the classification key (e.g., "cat0", "cat1", etc.)
-				const classKey = reverseLabels[classification] || 'unknown';
-				console.log("classKey:", classKey);
-
-				// CAT0 is your "low confidence" bucket
+                const classKey = reverseLabels[classification] || 'unknown';
 				const isLowConfidence = classKey === "cat0";
-
 				const viewLinkId = isLowConfidence ? "#contract-text-original" : "#contract-text-highlight";
 				const viewLinkText = isLowConfidence ? "View the original text" : "View the text identified";
 				const contentBlockId = isLowConfidence ? "contract-text-original" : "contract-text-highlight";
-				const scrollButton = isLowConfidence
-					? ""
-					: `<a class='cfc-button' href='#' onclick="scrollToHighlightedText(event, 'first-highlight')">Skip to climate aligned text</a>`;
-				resultDiv.innerHTML = `
-					<h2>Result for the single contract</h2>
-					<div class="detection-result single">
-						<div class='result-blk ${classKey}'>
-							<strong>It is ${classification}</strong>
-							<span class='desc'>that this contract contains climate aligned clauses.</span>
-							<a data-fancybox data-src='${viewLinkId}' href='#'>${viewLinkText}</a>
-						</div>
-					</div>
+				const scrollButton = isLowConfidence ? "" : `<a class='cfc-button' href='#' onclick="scrollToHighlightedText(event, 'first-highlight')">Skip to climate aligned text</a>`;
+				
+                resultDiv.innerHTML = `
+                    <div id = "detectionSummary">
+					    <h2>Result for your contract</h2>
+					    <div class="detection-result single">
+						    <div class='result-blk ${classKey}'>
+							    <strong>It is ${classification}</strong>
+							    <span class='desc'>that this contract contains climate aligned clauses.</span>
+							    <a data-fancybox data-src='${viewLinkId}' href='#'>${viewLinkText}</a>
+						    </div>
+					    </div>
 
-					<div id="${contentBlockId}" class="contract-listing hidden">
-						<h1>Original contract text</h1>
-						${scrollButton}
-						<div class='highlighted-text-wrapper'>
-							${highlight}
-						</div>
-						<button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
-					</div>
+					    <div id="${contentBlockId}" class="contract-listing hidden">
+						    <h1>Original contract text</h1>
+						    ${scrollButton}
+						    <div class='highlighted-text-wrapper'>
+							    ${highlight}
+						    </div>
+						    <button data-fancybox-close type="submit" class="cfc-button cfc-button--secondary">Close</button>
+					    </div>
 
-					<div id='guideReccomendations' class='border-section'>
-						<h2>Improve the result for this contract</h2>
-						<div class='cfc-cards-grid grid-count--2 grid-size--small cards-type--guide-summary-card-small'>
-							<div class='card-1 cfc-card has-post-thumbnail'>
-								<div class='cfc-card__inner'>
-									<div class='cfc-card__content'>
-										<span class='cfc-card__type'>Guide</span>
-										<h3 class='cfc-card__heading'>
-											<a class='cfc-card__link' href='https://chancerylaneproject.org/guides/get-information-on-contract-emission'>
-												Get information on contract emissions
-											</a>
-										</h3>
-										<div class='cfc-card__description'>
-											Gather data on emissions related to contracts to help measure, manage and report on them
-										</div>
-									</div>
-									<figure class='cfc-card__image'>
-										<picture>
-											<img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Get-information-on-contract-emissions-640x384.png'>
-										</picture>
-									</figure>
-								</div>
-							</div>
-							<div class='card-2 cfc-card has-post-thumbnail'>
-								<div class='cfc-card__inner'>
-									<div class='cfc-card__content'>
-										<span class='cfc-card__type'>Guide</span>
-										<h3 class='cfc-card__heading'>
-											<a class='cfc-card__link' href='https://chancerylaneproject.org/guides/request-climate-information-in-due-diligence-questionnaires/'>
-												Request climate information in due diligence questionnaires
-											</a>
-										</h3>
-										<div class='cfc-card__description'>
-											Assess the climate performance of other organisations and how they will impact your transition plan
-										</div>
-									</div>
-									<figure class='cfc-card__image'>
-										<picture>
-											<img alt='' decoding='async' loading='lazy' src='https://chancerylaneproject.org/wp-content/uploads/2024/04/Request-climate-information-in-due-diligence-questionnaires-640x384.png'>
-										</picture>
-									</figure>
-								</div>
-							</div>
-						</div>
-					</div>
+                    <!-- New Section: Prompt for Recommender -->
+                    <div id="recommenderPrompt" class="border-section">
+                        <h2>⚠️ You may be at risk for climate liability</h2>
+                        <p>Based on your contract, we can suggest specific clauses to improve its climate alignment.</p>
+                        <button id="startRecommenderBtn" class="cfc-button">Continue to find relevant clauses</button>
+                    </div>
+
+                    <!-- Placeholders for Recommender results and explainers -->
+                    <h2 id="recommenderHeader" class="hidden">Based on your contract, the 3 most relevant clauses to help avoid climate-related risk are:</h2>
+                    <div id="recommenderResults"></div>
+                    <div id="recommenderExplainers" class="hidden"></div>
 				`;
-			} 
-		} catch (error) {
-			console.error("❌ Network or parsing error:", error);
+                
+                // Add listener to the newly created button
+                document.getElementById('startRecommenderBtn').addEventListener('click', runRecommender);
 
-			// Try to read the response body if it's available (for backend error info)
-			if (error instanceof Response) {
-				try {
-					const errorText = await error.text();
-					console.error("❗ Server response:", errorText);
-				} catch (innerErr) {
-					console.error("⚠️ Could not read error response:", innerErr);
-				}
-			}
-
-			loadingDiv.classList.add("hidden");
-			resultDiv.classList.remove("hidden");
-			resultDiv.innerHTML = `<p style="color: red;">Error processing your single file request. Please try again.</p>`;
-		}
+			} catch (error) {
+				console.error("❌ Error processing detector request:", error);
+				showErrorBanner(`Error processing your request: ${error.message}. Please try again.`);
+                uploadForm.classList.remove("hidden"); // Show form again on error
+			} finally {
+                hideLoading(loadingInterval);
+                resultDiv.classList.remove("hidden");
+            }
 		});
 
-		const urlParams = new URLSearchParams(window.location.search);
-		const errorType = urlParams.get('error');
+        // 2. Function to run the Recommender when its button is clicked
+        async function runRecommender() {
+            document.getElementById('recommenderPrompt').style.display = 'none';
+            if (!uploadedFile) {
+                showErrorBanner("Could not find the uploaded file to run the recommender.");
+                return;
+            }
 
-		//show error message
-		if (errorType) {
-			const errorBanner = document.getElementById("errorBanner");
-			const errorMessage = document.getElementById("errorMessage");
+            document.getElementById('recommenderPrompt').classList.add('hidden');
+            const loadingInterval = showLoading("Finding recommended clauses (this may take a minute or two)...");
 
-			if (errorType === 'too-many-files') {
-				errorMessage.textContent = "This server can only handle up to 1000 files; please try again.";
-			} else if (errorType === 'processing-failed') {
-				errorMessage.textContent = "There was an issue processing your files. Please try again.";
-			}
+            const formData = new FormData();
+            formData.append("file", uploadedFile);
+            
+            const baseUrl = `${window.location.protocol}//${window.location.host}`;
+  			const taxonomyUrl = `${baseUrl}/risk_taxonomy`;
 
-			errorBanner.classList.remove("hidden");
+            try {
+                // This fetch is for the RECOMMENDER
+                const response = await fetch(`${baseUrl}/find_clauses/`, {
+                    method: "POST",
+                    body: formData,
+                });
 
-			//clear the query parameter after displaying the banner
-			history.replaceState(null, '', window.location.pathname);
-		}
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
 
+                const result = await response.json();
+				const matches = result.matches || [];
 
+				document
+				.getElementById('recommenderHeader')
+				.classList.remove('hidden');
+
+				const allRisks = matches
+					.flatMap(m => m.risks.split(',').map(r => r.trim()))
+					.filter(r => r);                 
+				const uniqueRisks = [...new Set(allRisks)];
+
+				const detectionDiv = document.getElementById("detectionSummary");
+				if (uniqueRisks.length) {
+					const riskBanner = document.createElement("div");
+					riskBanner.classList.add("risk-banner");
+					riskBanner.innerHTML = `
+					<h2>The suggested clauses below are designed to protect against the following risks:</h2>
+					<ul class="risk-list">
+						${uniqueRisks.map(r => `<li>${r.replace(/-/g,' ')}</li>`).join('')}
+					</ul>
+					<h2>This result suggests you <strong>COULD</strong> be liable for these risks.</h2>
+					<a
+						data-fancybox
+						data-type="iframe"
+						data-src="${taxonomyUrl}"
+						href="javascript:;"
+						class="cfc-button cfc-button--secondary taxonomy-btn"
+						style="margin-top:1em; display:inline-block;"
+					>
+						View full risk taxonomy
+					</a>
+					`;
+					resultDiv.insertBefore(riskBanner, detectionDiv);
+				}
+				const header = document.getElementById('recommenderHeader');
+                const recommenderResultsDiv = document.getElementById("recommenderResults");
+                recommenderResultsDiv.innerHTML = '';
+                resultDiv.insertBefore(header, detectionDiv);
+				resultDiv.insertBefore(recommenderResultsDiv, detectionDiv);
+
+                if (result.matches && result.matches.length > 0) {
+                    for (const match of result.matches) {
+                        const clauseDiv = document.createElement("div");
+                        clauseDiv.classList.add("clause-pseudo-wrapper");
+
+                        clauseDiv.innerHTML = `
+                            <div class="clause-wrapper">
+                                <h4>${match.name}</h4>
+                                <p class="clause-justification"><em>Reason: ${match.reason}</em></p>
+                                <a href="https://chancerylaneproject.org/" target="_blank" title="Find out more about this clause" class="hot-spot"></a>
+                            </div>
+                        `;
+                        recommenderResultsDiv.appendChild(clauseDiv);
+                    }
+                } else {
+                     recommenderResultsDiv.innerHTML = `<h2 class="border-section">Could not find relevant clauses for this contract.</h2>`;
+                }
+                
+                // Show the recommender guide/explainer sections
+                const recommenderExplainersDiv = document.getElementById("recommenderExplainers");
+                recommenderExplainersDiv.innerHTML = `
+                    <div id="guideReccomendations" class="border-section">
+                      <h2>Learn how to prepare for, and implement these clauses</h2>
+                      <div class="cfc-cards-grid grid-count--2 grid-size--large cards-type--guide-summary-card-large grid-columns--2">
+                        <div class="card-1 cfc-card has-post-thumbnail"><div class="cfc-card__inner"><div class="cfc-card__content"><span class="cfc-card__type">Guide</span><h3 class="cfc-card__heading"><a class="cfc-card__link" href="https://chancerylaneproject.org/guides/introduce-climate-provisions-to-contract-parties/" >Introduce climate provisions to contract parties</a></h3><div class="cfc-card__description">Create the right conditions for using contracts to reduce emissions from the very beginning</div></div><figure class="cfc-card__image"><picture><img alt="" decoding="async" loading="lazy" src="https://chancerylaneproject.org/wp-content/uploads/2024/04/Introduce-climate-provisions-to-contract-parties-640x384.png"></picture></figure></div></div>
+                        <div class="card-2 cfc-card has-post-thumbnail"><div class="cfc-card__inner"><div class="cfc-card__content"><span class="cfc-card__type">Guide</span><h3 class="cfc-card__heading"><a class="cfc-card__link" href="https://chancerylaneproject.org/guides/integrate-climate-obligations-into-contracts/">Integrate climate obligations into contracts</a></h3><div class="cfc-card__description">Impose legally binding and enforceable obligations to help meet emissions-reduction targets</div></div><figure class="cfc-card__image"><picture><img alt="" decoding="async" loading="lazy" src="https://chancerylaneproject.org/wp-content/uploads/2024/04/Integrate-climate-obligations-into-contracts-640x384.png"></picture></figure></div></div>
+                      </div>
+                    </div>
+                `;
+                recommenderExplainersDiv.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("❌ Error processing recommender request:", error);
+                const recommenderResultsDiv = document.getElementById("recommenderResults");
+                recommenderResultsDiv.innerHTML = `<p style="color: red;" class="border-section">Error finding recommended clauses. Please try again.</p>`;
+            } finally {
+                hideLoading(loadingInterval);
+            }
+        }
 	</script>
-
-	<div id="contract-listing-likely" class="contract-listing hidden">
-	  <h1>7 contracts likely to be climate aligned</h1>
-	  <ul>
-		<li>
-		  Non Sint Voluptatem Rerum
-		  <a href="#">View text [+]</a>
-		</li>
-		<li>Dolor Aliquam Est Blanditiis Veritatis Nisi Nihil <a href="#">View text [+]</a></li>
-		<li>Sunt Incidunt Magni Aut <a href="#">View text [+]</a></li>
-		<li>Optio Maxime Sed Rerum Non <a href="#">View text [+]</a></li>
-		<li>Hic Expedita Corrupti Laudantium Ut <a href="#">View text [+]</a></li>
-		<li>Doloribus Temporibus Sint Sapiente Nihil <a href="#">View text [+]</a></li>
-		<li>Earum Ducimus Placeat <a href="#">View text [+]</a></li>
-	  </ul>
-	  <button data-fancybox-close type="submit" class="cfc-button">Close</button>
-	</div>
-
 	<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 	<script>
 	  Fancybox.bind('[data-fancybox]', {
-		// Custom options for all galleries
+		// Custom options
 	  });
 	</script>
 </body>
 </html>
+

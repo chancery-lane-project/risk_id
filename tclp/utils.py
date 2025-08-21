@@ -1,4 +1,5 @@
 #imports 
+import json
 import os
 import random
 import re
@@ -10,7 +11,6 @@ from typing import List
 
 import hdbscan
 import hdbscan.prediction
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -27,7 +27,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
 from torch.nn.functional import softmax
-from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 # Detector utils #
 #-------------------------------------------------------------------#
@@ -701,7 +701,6 @@ def get_embedding_matches_subset(
     names_subset, 
     tokenizer, 
     model, 
-    method="cls", 
     k =3
 ):
     # Embed the top-K candidate clauses
@@ -816,8 +815,8 @@ def rebuild_documents(df):
 def getting_started(model_path, clause_folder, clause_html):
     model_path = os.path.abspath(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
-    model = model.base_model
+    detector_model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
+    classifier_model = detector_model.base_model
     #this is specific to embeddings; we have now lost the classification head
 
     documents, file_names, _ = load_clauses(clause_folder)
@@ -828,7 +827,7 @@ def getting_started(model_path, clause_folder, clause_html):
     final_df
     names, docs = rebuild_documents(final_df)
     
-    return tokenizer, model, names, docs, final_df
+    return tokenizer, detector_model, classifier_model, names, docs, final_df
 
 def combine_title_and_text(row, title_to_document):
     title = row['Clause']
@@ -887,21 +886,24 @@ def multi_label_jacccard(clause_tags, visualize = False):
 
 def perform_hdbscan(tag_matrix, embeddings): 
     hybrid_features = np.hstack([embeddings, tag_matrix])
+
     umap_model = umap.UMAP(random_state=42)
     hybrid_2d = umap_model.fit_transform(hybrid_features)
+
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=5,
-        min_samples=1,  # more sensitive to fine structure
-        cluster_selection_epsilon=0.6,  # lower = more clusters, play with this
+        min_samples=1,
+        cluster_selection_epsilon=0.6,
         prediction_data=True
     )
     _ = clusterer.fit_predict(hybrid_2d)
+
     soft_labels = hdbscan.prediction.all_points_membership_vectors(clusterer)
     forced_labels = soft_labels.argmax(axis=1)
     
-    return forced_labels, hybrid_2d
+    return forced_labels, hybrid_2d, umap_model
 
-def plot_clusters(clause_tags, forced_labels, hybrid_2d):
+def plot_clusters(clause_tags, hybrid_2d):
     fig = px.scatter(
         x=hybrid_2d[:, 0],
         y=hybrid_2d[:, 1],
@@ -916,10 +918,10 @@ def plot_clusters(clause_tags, forced_labels, hybrid_2d):
     fig.update_traces(marker=dict(size=6, opacity=0.7))
     #make it more square 
     fig.update_layout(
-    width=600,
+    width=900,
     height=900,
     margin=dict(l=20, r=20, t=40, b=20),
-    xaxis=dict(scaleanchor=None),  # 👈 explicitly break any aspect lock
+    xaxis=dict(scaleanchor=None),  
     )
     fig.update_yaxes(range=[-5, 5])
     fig.show()
@@ -968,29 +970,20 @@ def per_cluster_split(X, y, cluster_labels, test_size=0.2, min_test_per_cluster=
 
     return X_train, X_test, y_train, y_test
 
-def prepare_cluster(clause_tags, model, tokenizer, forced_labels):
-    filtered = clause_tags[clause_tags['HybridCluster'] != -1].copy()
-    X = filtered['CombinedText']
-    y = filtered['HybridCluster']
-    X_emb = np.vstack([
-    encode_text(text, tokenizer, model) for text in X
-        ])
-    X_train, X_test, y_train, y_test = per_cluster_split(X_emb, y, forced_labels, test_size=0.2, min_test_per_cluster=2)
-    return X_train, X_test, y_train, y_test
-
-def perform_cluster(cluster_model, query_embedding, tokenizer, embedding_model, clause_tags, embed = False):
+def perform_cluster(cluster_model, query_embedding, tokenizer, embedding_model, clause_tags, fitted_umap, embed=False):
+    # Embed the query if requested
     if embed:
         query_embedding = encode_text(query_embedding, tokenizer, embedding_model)
-    pred_cluster = cluster_model.predict(query_embedding.reshape(1, -1))[0]
+
+    query_embedding_umap = fitted_umap.transform(query_embedding.reshape(1, -1))
+
+    # Predict cluster
+    pred_cluster = cluster_model.predict(query_embedding_umap)[0]
+
+    # Filter clauses to predicted cluster
     cluster_subset_df = clause_tags[clause_tags['HybridCluster'] == pred_cluster]
 
-    # Get texts and titles
-    subset_docs = cluster_subset_df['CombinedText'].tolist()
-    subset_names = cluster_subset_df['Clause'].tolist()
-    print(clause_tags.columns)
-    cluster_subset_df = clause_tags[clause_tags['HybridCluster'] == pred_cluster]
-
-    # Get texts and titles
+    # Extract text and names
     subset_docs = cluster_subset_df['CombinedText'].tolist()
     subset_names = cluster_subset_df['Clause'].tolist()
     
@@ -1009,6 +1002,33 @@ def prepare_clause_tags(clause_tags, final_df):
 
     return clause_tags
 
+def parse_response(response_text):
+    """
+    Parses a JSON-formatted LLM response, optionally wrapped in Markdown code fences.
+    Returns a list of clauses with 'Clause Name' and 'Reasoning'.
+    """
+    if not response_text.strip():
+        raise ValueError("Empty response text")
+
+    # Remove surrounding triple backticks or Markdown code fences if present
+    response_text = response_text.strip()
+    if response_text.startswith("```"):
+        response_text = re.sub(r"^```(?:json)?\s*", "", response_text)
+        response_text = re.sub(r"\s*```$", "", response_text)
+
+    try:
+        clauses = json.loads(response_text)
+        if not isinstance(clauses, list):
+            raise ValueError("Expected a list of clause dictionaries.")
+        df = pd.DataFrame(clauses)
+        for c in clauses:
+            if not all(k in c for k in ["Clause Name", "Reasoning"]):
+                raise ValueError("Missing expected keys in clause object.")
+        return df[["Clause Name", "Reasoning"]]
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format: {e}")
+
+
 # Risk utils#
 #-------------------------------------------------------------------#
 
@@ -1025,14 +1045,14 @@ def classify_clause(clause_text, taxonomy_df, given_prompt, client, model="qwen/
     system_prompt = format_taxonomy_prompt(taxonomy_df, given_prompt)
     
     user_prompt = f"""Clause:
-\"\"\"{clause_text}\"\"\"
+        \"\"\"{clause_text}\"\"\"
 
-Which risk categories does this clause help mitigate?
-Respond in this JSON format:
-{{
-  "labels": ["label1", "label2", ...],
-  "justification": "Explain why these labels apply to this clause."
-}}"""
+        Which risk categories does this clause help mitigate?
+        Respond in this JSON format:
+        {{
+        "labels": ["label1", "label2", ...],
+        "justification": "Explain why these labels apply to this clause."
+        }}"""
 
     response = client.chat.completions.create(
         model=model,
@@ -1072,3 +1092,16 @@ def format_classification_result(name, result_json, risk_labels):
             row[label] = "1"  # mark as positive
 
     return row
+
+def get_risk_label(response_df, risk_df):
+    for name in response_df['Clause Name']:
+        #find the name in risk_df 
+        if name in risk_df['Title'].values:
+            risk_label = risk_df[risk_df['Title'] == name]['combined_labels'].values[0]
+            #add this to the response_df
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = risk_label
+            print(f"Clause '{name}' found in risk categories with label: {risk_label}.")
+        else:
+            print(f"Clause '{name}' not found in risk categories.")
+            
+    return response_df
