@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const filenameEl = document.querySelector('.upload__filename');
   const labelEl = document.querySelector('label[for="file"]'); // "Choose a file" button
   const radioEl = document.getElementById('Contract5');        // optional
+  const previewEl = document.getElementById('file-preview');   // live text preview
 
   // If there’s no file input on this page, do nothing.
   if (!fileInput) return;
@@ -77,6 +78,23 @@ document.addEventListener("DOMContentLoaded", function () {
     if (hasFiles && radioEl) {
       radioEl.checked = true;
       radioEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // Live preview for .txt files
+    if (previewEl) {
+      if (hasFiles && fileInput.files[0] && fileInput.files[0].type === 'text/plain') {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = (reader.result || '').toString();
+          const snippet = text.split(/\r?\n/).slice(0, 10).join('\n');
+          previewEl.style.display = 'block';
+          previewEl.textContent = snippet || '[No preview available]';
+        };
+        reader.readAsText(fileInput.files[0]);
+      } else {
+        previewEl.style.display = 'none';
+        previewEl.textContent = '';
+      }
     }
   });
 

@@ -13,6 +13,56 @@
   <!-- lightbox -->
   <link rel="stylesheet" href="assets/css/fancybox.css" />
 </head>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const contractName =
+        params.get('contract') ||
+        params.get('Contract') ||
+        sessionStorage.getItem('contractName'); // if you used sessionStorage earlier
+
+      const titleEl = document.getElementById('contract-title');
+      if (titleEl && contractName) {
+        titleEl.textContent = contractName;
+      }
+
+      // Load process result (classification + highlighted URL)
+      try {
+        const raw = sessionStorage.getItem('processResult');
+        if (raw) {
+          const data = JSON.parse(raw);
+          // Update score label (basic example)
+          const scoreEls = document.querySelectorAll('.score-overview');
+          scoreEls.forEach(el => el.classList.remove('active'));
+          const map = {
+            'unlikely': 'none',
+            'possible': 'basic',
+            'likely': 'moderate',
+            'very likely': 'strong'
+          };
+          const cls = map[(data.classification || '').toLowerCase()] || 'none';
+          const target = document.querySelector('.score-overview.' + cls);
+          if (target) target.classList.add('active');
+
+          // Add link to highlighted output if available
+          const p = document.querySelector('.context');
+          if (p && data.highlighted_output_url) {
+            const a = document.createElement('a');
+            a.href = data.highlighted_output_url;
+            a.target = '_blank';
+            a.textContent = 'Open highlighted analysis';
+            const sep = document.createTextNode(' ');
+            p.appendChild(document.createElement('br'));
+            p.appendChild(sep);
+            p.appendChild(a);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    });
+  </script>
+</head>
 
 <body class=""><!-- use classes "vanilla" for minimal styling mode, or "animated" for changing background gradient -->
   <a class="skip-link" href="#main">Skip to content</a>
@@ -45,7 +95,7 @@
                 </span>
               </p>
             </div>
-            <h2>Total Facilities Management Agreement (TFMA).DOCX</h2>
+            <h2 id="contract-title">[Contract name will go here]</h2>
             <div class="row meta-data-summary">
               <span>
                   <strong>Sector:</strong><br />
@@ -69,39 +119,11 @@
 
                 <p class="score-overview none">None</p>
                 <p class="score-overview basic">BASIC</p>
-                <p class="score-overview minimal">Minimal</p>
                 <p class="score-overview moderate">Moderate</p>
                 <p class="score-overview strong">Strong</p>
 
-                <script>
-                  // REMOVE THIS JS - score cycle demo only
-                  document.addEventListener("DOMContentLoaded", function () {
-                    const scores = document.querySelectorAll(".score-overview");
-                    let current = 0;
-                    // Ensure at least one item is shown
-                    if (scores.length > 0) {
-                      scores[current].classList.add("active");
-                    }
-                    // Attach click listener to document
-                    document.addEventListener("click", function (e) {
-                      const currentEl = scores[current];
-                      // Only respond to clicks on the visible score
-                      if (e.target === currentEl) {
-                        // Hide current
-                        currentEl.classList.remove("active");
-                        // Move to next index
-                        current = (current + 1) % scores.length;
-                        // Show next
-                        scores[current].classList.add("active");
-                      }
-                    });
-                  });
-                </script>
 
-
-                <p class="context"><strong>Climate-aligned language detected</strong><br/>Some climate-aligned clauses included and mentions of carbon footprint.
-                  <br />
-                <a href="#">View analysis</a></p>
+                <p class="context"><strong>Climate-aligned language detected</strong><br/>Some climate-aligned clauses included and mentions of carbon footprint.</p>
               </div>
               <div class="col quant-summary">
                 <p><strong>17</strong> Reccomended clauses</p>

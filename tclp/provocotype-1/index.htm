@@ -37,8 +37,7 @@
       </div>
 
         <div class="select-contract">
-
-          <form action="index2.htm" method="get" id="analysisForm">
+          <form action="/index2.htm" method="get" id="analysisForm">
           <div class="govuk-form-group" id="analysis-group">
             <fieldset class="govuk-fieldset"aria-describedby="analysis-hint analysis-error">
               <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
@@ -55,7 +54,7 @@
               <div class="govuk-radios" data-module="govuk-radios">
 
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="Contract1" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract1-item-hint">
+                  <input class="govuk-radios__input" id="Contract1" name="Contract" type="radio" value="Total Facilities Management Agreement (TFMA).DOCX" aria-describedby="Contract1-item-hint">
                   <label class="govuk-label govuk-radios__label" for="Contract1">
                     <span>Total Facilities Management Agreement (TFMA).DOCX</span>
                     <div id="Contract1-item-hint" class="govuk-hint govuk-radios__hint">
@@ -67,43 +66,43 @@
                 </div>
 
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="Contract2" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract2-item-hint">
+                  <input class="govuk-radios__input" id="Contract2" name="Contract" type="radio" value="NEC4 Engineering and Construction Contract.PDF" aria-describedby="Contract2-item-hint">
                   <label class="govuk-label govuk-radios__label" for="Contract2">
                     <span>NEC4 Engineering and Construction Contract.PDF</span>
                     <div id="Contract2-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Construction</span>
                       <span><strong>Subject matter: </strong><br />Construction Contract</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract2.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract2.htm">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
 
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="Contract3" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract3-item-hint">
+                  <input class="govuk-radios__input" id="Contract3" name="Contract" type="radio" value="Loan Market Association (LMA) Facility Agreement.DOC" aria-describedby="Contract3-item-hint">
                   <label class="govuk-label govuk-radios__label" for="Contract3">
                     <span>Loan Market Association (LMA) Facility Agreement.DOC</span>
                     <div id="Contract3-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Banking and finance</span>
                       <span><strong>Subject matter: </strong><br />Loan Agreement</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract3.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract3.htm">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
 
                 <div class="govuk-radios__item">
-                  <input class="govuk-radios__input" id="Contract4" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract4-item-hint">
+                  <input class="govuk-radios__input" id="Contract4" name="Contract" type="radio" value="Software-as-a-Service (SaaS) Agreement.DOC" aria-describedby="Contract4-item-hint">
                   <label class="govuk-label govuk-radios__label" for="Contract4">
                     <span>Software-as-a-Service (SaaS) Agreement.DOC</span>
                     <div id="Contract4-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Technology</span>
                       <span><strong>Subject matter: </strong><br />Software licensing & services</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract4.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract4.htm">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
 
                 <div class="govuk-radios__item upload">
-                  <input class="govuk-radios__input" id="Contract5" name="Contract" type="radio" value="government-gateway" aria-describedby="Upload-item-hint">
+                  <input class="govuk-radios__input" id="Contract5" name="Contract" type="radio" value="Uploaded contract" aria-describedby="Upload-item-hint">
                   <label class="govuk-label govuk-radios__label" for="Contract5">
                     <span>Upload your own contract</span>
                     <div id="Contract5-item-hint" class="govuk-hint govuk-radios__hint">
@@ -112,9 +111,10 @@
                     </div>
                   </label>
                   <div class="upload">
-                    <input id="file" class="upload__input" type="file" accept=".pdf,.doc,.docx" />
+                    <input id="file" class="upload__input" type="file" accept=".txt,.pdf,.doc,.docx" />
                     <label for="file" class="upload__btn">Choose file</label>
                     <span class="upload__filename" aria-live="polite"></span>
+                    <div id="file-preview" class="upload__preview" aria-live="polite" style="display:none;margin-top:8px;"></div>
                   </div>
                 </div>
 
@@ -140,6 +140,74 @@
   <!-- lightbox -->
   <script src="assets/js/fancybox.umd.js"></script>
   <script src="assets/js/main.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const fileInput = document.getElementById('file');
+      const filenameEl = document.querySelector('.upload__filename');
+      const uploadRadio = document.getElementById('Contract5');
+      const form = document.getElementById('analysisForm');
+
+      if (fileInput) {
+        fileInput.addEventListener('change', function () {
+          const file = fileInput.files && fileInput.files[0];
+          if (!file) return;
+          const name = file.name;
+
+          if (filenameEl) filenameEl.textContent = name;
+          if (uploadRadio) {
+            uploadRadio.value = name; // submit actual filename as Contract value
+            uploadRadio.checked = true; // ensure this option is selected
+          }
+          try { sessionStorage.setItem('contractName', name); } catch (e) {}
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+
+          const selected = document.querySelector('input[name="Contract"]:checked');
+          const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+          if (!hasFile) {
+            alert('Please upload a .txt file for analysis.');
+            return;
+          }
+
+          const file = fileInput.files[0];
+          if (!file.name.toLowerCase().endsWith('.txt')) {
+            alert('Only .txt files are supported at the moment.');
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append('files', file, file.name); // FastAPI expects list[UploadFile] named "files"
+          formData.append('is_folder', 'false');
+
+          try {
+            const resp = await fetch('/process/', { method: 'POST', body: formData });
+            if (!resp.ok) {
+              const errTxt = await resp.text();
+              throw new Error(errTxt || 'Request failed');
+            }
+            const data = await resp.json();
+
+            try {
+              sessionStorage.setItem('processResult', JSON.stringify(data));
+              // Keep the contract name for index2 display
+              const contractName = (selected && selected.value) || (file && file.name) || 'Uploaded contract';
+              sessionStorage.setItem('contractName', contractName);
+            } catch (e) {}
+
+            // Navigate to report page
+            window.location.href = '/index2.htm';
+          } catch (err) {
+            alert('There was a problem analysing your file. ' + (err && err.message ? err.message : ''));
+          }
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

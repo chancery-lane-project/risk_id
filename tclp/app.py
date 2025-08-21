@@ -56,16 +56,24 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
 # Absolute paths for directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 temp_dir = os.path.join(BASE_DIR, "temp_uploads")
-output_dir = os.path.join(temp_dir, "output")
+# Make output persist outside temp_dir so cleanup doesn't remove files we link to
+output_dir = os.path.join(BASE_DIR, "output")
 MODEL_PATH = "models/CC_BERT/CC_model_detect"
 CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
 RISK_INDICATORS = "data/risk_categorization_results.csv"
 RISK_TAXONOMY = 'data/risk_taxonomy.xlsx'
-INDEX_PATH = "index.html"
+INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
+ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
 CLUSTERING_MODEL = 'models/clustering_model.pkl'
 UMAP_MODEL = 'models/umap_model.pkl'
+
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.join(BASE_DIR, "provocotype-1", "assets")),
+    name="assets",
+)
 
 os.makedirs(output_dir, exist_ok=True)
 app.mount("/output", StaticFiles(directory=output_dir), name="output")
@@ -78,7 +86,8 @@ with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
 risk_taxonomy = pd.read_excel(RISK_TAXONOMY)
 taxonomy_html = risk_taxonomy.to_html(index=False, classes="table table-sm")
-utils.save_file("risk_taxonomy.html", taxonomy_html)
+# Save risk taxonomy into the served output directory
+utils.save_file(os.path.join(output_dir, "risk_taxonomy.html"), taxonomy_html)
 umap_model = joblib.load(UMAP_MODEL)
 device = torch.device("cpu")
 
@@ -133,7 +142,8 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         
         if is_folder == "false":
             highlighted_output = utils.highlight_climate_content(result_df)
-            utils.save_file("highlighted_output.html", highlighted_output)
+            # Save into output directory so it is served at /output/highlighted_output.html
+            utils.save_file(os.path.join(output_dir, "highlighted_output.html"), highlighted_output)
 
         contract_df = utils.create_contract_df(
             result_df, processed_contracts, labelled=False
@@ -147,13 +157,14 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         response = {
             "classification": result,
             "highlighted_content": highlighted_output,
+            "highlighted_output_url": "/output/highlighted_output.html",
             "bucket_labels": {
                 "cat0": CAT0,
                 "cat1": CAT1,
                 "cat2": CAT2,
                 "cat3": CAT3
-            
-                }}
+            }
+        }
 
         print(response)
 
@@ -378,6 +389,19 @@ def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     if not os.path.exists(INDEX_PATH):
         raise RuntimeError(f"{INDEX_PATH} not found")
     return FileResponse(INDEX_PATH, media_type="text/html")
+
+# Optional: serve the secondary frontend directly
+@app.get("/index2.htm", response_class=FileResponse)
+def read_index2_htm(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+    if not os.path.exists(ALT_INDEX_PATH):
+        raise RuntimeError(f"{ALT_INDEX_PATH} not found")
+    return FileResponse(ALT_INDEX_PATH, media_type="text/html")
+
+@app.get("/index2", response_class=FileResponse)
+def read_index2(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+    if not os.path.exists(ALT_INDEX_PATH):
+        raise RuntimeError(f"{ALT_INDEX_PATH} not found")
+    return FileResponse(ALT_INDEX_PATH, media_type="text/html")
 
 # --- Run with Uvicorn ---
 if __name__ == "__main__":
