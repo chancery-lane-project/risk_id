@@ -5,6 +5,9 @@ import shutil
 import traceback
 from urllib.parse import unquote
 
+# Suppress tokenizers parallelism warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import joblib
 import pandas as pd
 import torch
@@ -142,8 +145,13 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         
         if is_folder == "false":
             highlighted_output = utils.highlight_climate_content(result_df)
-            # Save into output directory so it is served at /output/highlighted_output.html
-            utils.save_file(os.path.join(output_dir, "highlighted_output.html"), highlighted_output)
+            # Save into output directory with timestamp to ensure freshness
+            import time
+            timestamp = int(time.time())
+            filename = f"highlighted_output_{timestamp}.html"
+            filepath = os.path.join(output_dir, filename)
+            utils.save_file(filepath, highlighted_output)
+            print(f"Saved highlighted output to: {filepath}")
 
         contract_df = utils.create_contract_df(
             result_df, processed_contracts, labelled=False
@@ -157,7 +165,7 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         response = {
             "classification": result,
             "highlighted_content": highlighted_output,
-            "highlighted_output_url": "/output/highlighted_output.html",
+            "highlighted_output_url": f"/output/{filename}",
             "bucket_labels": {
                 "cat0": CAT0,
                 "cat1": CAT1,
@@ -165,8 +173,6 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
                 "cat3": CAT3
             }
         }
-
-        print(response)
 
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -324,15 +330,37 @@ async def find_clauses(file: UploadFile = File(...)):
     #find the clause names in the risk_df
     df_response = utils.get_risk_label(df_response, risk_df)
 
+    # Build matches with full text and excerpts
+    matches = []
+    for _, row in df_response.iterrows():
+        clause_name = row["Clause Name"].replace(".txt", "")
+        
+        # Get the full clause text using get_clause
+        try:
+            clause_data = get_clause(clause_name)
+            full_text = clause_data["text"]
+            
+            # Extract first two sentences for excerpt
+            import re
+            sentences = re.split(r'[.!?]+', full_text.strip())
+            sentences = [s.strip() for s in sentences if s.strip()]
+            excerpt = '. '.join(sentences[:2]) + '.' if len(sentences) >= 2 else full_text[:200] + '...'
+            
+        except Exception as e:
+            print(f"Error getting clause text for {clause_name}: {e}")
+            full_text = "Clause text not available"
+            excerpt = "Clause text not available"
+        
+        matches.append({
+            "name": clause_name,
+            "reason": row["Reasoning"],
+            "risks": row.get("combined_labels", "No specific risks identified") if pd.notna(row.get("combined_labels")) else "No specific risks identified",
+            "excerpt": excerpt,
+            "full_text": full_text
+        })
+
     return {
-        "matches": [
-            {
-                "name": row["Clause Name"].replace(".txt", ""),
-                "reason": row["Reasoning"],
-                "risks": row["combined_labels"],
-            }
-            for _, row in df_response.iterrows()
-        ],
+        "matches": matches,
         "risk_taxonomy_url": "/output/risk_taxonomy.html"
     }
 

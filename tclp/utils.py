@@ -1103,5 +1103,7 @@ def get_risk_label(response_df, risk_df):
             print(f"Clause '{name}' found in risk categories with label: {risk_label}.")
         else:
             print(f"Clause '{name}' not found in risk categories.")
+            # Set a default value to avoid NaN
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = "No specific risks identified"
             
     return response_df

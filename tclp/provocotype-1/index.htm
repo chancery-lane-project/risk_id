@@ -114,7 +114,6 @@
                     <input id="file" class="upload__input" type="file" accept=".txt,.pdf,.doc,.docx" />
                     <label for="file" class="upload__btn">Choose file</label>
                     <span class="upload__filename" aria-live="polite"></span>
-                    <div id="file-preview" class="upload__preview" aria-live="polite" style="display:none;margin-top:8px;"></div>
                   </div>
                 </div>
 
@@ -169,40 +168,117 @@
           const selected = document.querySelector('input[name="Contract"]:checked');
           const hasFile = fileInput && fileInput.files && fileInput.files[0];
 
-          if (!hasFile) {
-            alert('Please upload a .txt file for analysis.');
+          // Determine what we're processing and create a file-like object
+          let fileToProcess = null;
+          let displayName = 'Contract';
+
+          if (hasFile) {
+            // User uploaded a file
+            fileToProcess = fileInput.files[0];
+            displayName = fileToProcess.name;
+          } else if (selected && selected.id && selected.id.startsWith('Contract') && selected.id !== 'Contract5') {
+            // Sample contract selected - fetch content and create file-like object
+            try {
+              console.log('Processing sample contract...');
+              const id = selected.id || '';
+              const m = id.match(/^Contract(\d+)$/);
+              if (!m) throw new Error('Invalid sample contract selection.');
+              const num = m[1];
+              const sampleUrl = `assets/sample-contracts/contract${num}.htm`;
+              console.log('Loading sample from:', sampleUrl);
+
+              const resp = await fetch(sampleUrl);
+              if (!resp.ok) throw new Error('Failed to load sample contract.');
+              const html = await resp.text();
+              const tmp = document.createElement('div');
+              tmp.innerHTML = html;
+              const text = tmp.textContent || tmp.innerText || '';
+              console.log('Extracted text length:', text.length);
+
+              // Create a file-like object from the text
+              const blob = new Blob([text], { type: 'text/plain' });
+              fileToProcess = new File([blob], `${selected.value}.txt`, { type: 'text/plain' });
+              displayName = selected.value;
+            } catch (err) {
+              console.error('Error preparing sample contract:', err);
+              alert('There was a problem preparing the sample contract. ' + (err && err.message ? err.message : ''));
+              return;
+            }
+          } else {
+            // No file uploaded and no sample selected
+            alert('Please upload a .txt file or choose a sample contract.');
             return;
           }
 
-          const file = fileInput.files[0];
-          if (!file.name.toLowerCase().endsWith('.txt')) {
+          // Validate file type
+          if (!fileToProcess.name.toLowerCase().endsWith('.txt')) {
             alert('Only .txt files are supported at the moment.');
             return;
           }
 
-          const formData = new FormData();
-          formData.append('files', file, file.name); // FastAPI expects list[UploadFile] named "files"
-          formData.append('is_folder', 'false');
-
+          // Single processing flow for both uploaded files and sample contracts
           try {
+            console.log('Processing file:', fileToProcess.name);
+            
+            // Call /process/ endpoint
+            console.log('Calling /process/ endpoint...');
+            const formData = new FormData();
+            formData.append('files', fileToProcess, fileToProcess.name);
+            formData.append('is_folder', 'false');
+            
             const resp = await fetch('/process/', { method: 'POST', body: formData });
+            console.log('Process response status:', resp.status);
             if (!resp.ok) {
               const errTxt = await resp.text();
               throw new Error(errTxt || 'Request failed');
             }
             const data = await resp.json();
+            console.log('Process response received:', data);
+
+            // Call /find_clauses/ endpoint
+            let recommendResult = null;
+            try {
+              console.log('Calling /find_clauses/ endpoint...');
+              const clauseFormData = new FormData();
+              clauseFormData.append('file', fileToProcess, fileToProcess.name);
+              const clauseResp = await fetch('/find_clauses/', { method: 'POST', body: clauseFormData });
+              console.log('Clause response status:', clauseResp.status);
+              if (clauseResp.ok) {
+                recommendResult = await clauseResp.json();
+                console.log('Clause response received:', recommendResult);
+              } else {
+                const errTxt = await clauseResp.text();
+                throw new Error(errTxt || 'Clause detection failed');
+              }
+            } catch (e) {
+              console.error('Error in clause detection:', e);
+              recommendResult = null;
+            }
+
+            // Store results in sessionStorage
+            try {
+              console.log('Storing recommendResult in sessionStorage...');
+              sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
+              console.log('recommendResult stored successfully');
+            } catch (e) {
+              console.error('Error storing recommendResult:', e);
+            }
 
             try {
+              console.log('Storing processResult in sessionStorage...');
               sessionStorage.setItem('processResult', JSON.stringify(data));
-              // Keep the contract name for index2 display
-              const contractName = (selected && selected.value) || (file && file.name) || 'Uploaded contract';
-              sessionStorage.setItem('contractName', contractName);
-            } catch (e) {}
+              sessionStorage.setItem('contractName', displayName);
+              console.log('processResult and contractName stored successfully');
+            } catch (e) {
+              console.error('Error storing processResult:', e);
+            }
 
             // Navigate to report page
+            console.log('About to navigate to index2.htm...');
             window.location.href = '/index2.htm';
           } catch (err) {
-            alert('There was a problem analysing your file. ' + (err && err.message ? err.message : ''));
+            console.error('Error in form submission:', err);
+            alert('There was a problem processing your contract. ' + (err && err.message ? err.message : ''));
           }
         });
       }
