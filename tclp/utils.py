@@ -540,10 +540,11 @@ def predict_climatebert(texts, tokenizer, device, model, batch_size=16):
 # utils.py
 """This is the utils file for the clause_recommender task."""
     
-def load_clauses(clause_folder):
+def load_clauses(clause_folder, childs_name=False):
     documents = []
     file_names = []
     clause_titles = []
+    child_names = []
 
     for fname in sorted(os.listdir(clause_folder)):
         if fname.endswith(".txt"):
@@ -553,7 +554,7 @@ def load_clauses(clause_folder):
                 documents.append(content)
                 file_names.append(fname)
 
-                # Try to extract the <h4> title if available
+                # Parse HTML to extract <h4> title
                 soup = BeautifulSoup(content, "html.parser")
                 title_tag = soup.find("h4")
                 if title_tag:
@@ -561,7 +562,18 @@ def load_clauses(clause_folder):
                 else:
                     clause_titles.append(fname.replace(".txt", ""))  # fallback
 
-    return documents, file_names, clause_titles
+                # Optionally extract child's name
+                if childs_name:
+                    child_tag = soup.find("p", class_="childs-name")
+                    if child_tag:
+                        child_names.append(child_tag.text.strip())
+                    else:
+                        child_names.append("")  # fallback if not present
+
+    if childs_name:
+        return documents, file_names, clause_titles, child_names
+    else:
+        return documents, file_names, clause_titles
 
 def custom_stop_words():
     legal_words = [
@@ -812,22 +824,36 @@ def rebuild_documents(df):
     
     return filenames, documents
 
+def create_name_to_child_mapping(final_df):
+    """
+    Create a mapping from clause names (titles) to child names.
+    """
+    name_to_child = {}
+    for _, row in final_df.iterrows():
+        title = row['Title']
+        child_name = row['Name'] if pd.notna(row['Name']) else ""
+        name_to_child[title] = child_name
+    return name_to_child
+
 def getting_started(model_path, clause_folder, clause_html):
     model_path = os.path.abspath(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
     detector_model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
     classifier_model = detector_model.base_model
-    #this is specific to embeddings; we have now lost the classification head
+    # this is specific to embeddings; we have now lost the classification head
 
     documents, file_names, _ = load_clauses(clause_folder)
 
-    clause_boxes, _, _ = load_clauses(clause_html)
+    # Get child's name from clause_html
+    clause_boxes, _, _, child_names = load_clauses(clause_html, childs_name=True)
     clause_box_df = parse_clause_boxes_to_df(clause_boxes)
     final_df = attach_documents(clause_box_df, documents, file_names)
-    final_df
     names, docs = rebuild_documents(final_df)
     
-    return tokenizer, detector_model, classifier_model, names, docs, final_df
+    # Create a mapping from clause names to child names
+    name_to_child = create_name_to_child_mapping(final_df)
+    
+    return tokenizer, detector_model, classifier_model, names, docs, final_df, child_names, name_to_child
 
 def combine_title_and_text(row, title_to_document):
     title = row['Clause']

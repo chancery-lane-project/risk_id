@@ -176,6 +176,23 @@ a.btn {
     color: #1F2B55;
     border-color: #1F2B55;
   }
+  a.btn.sml,
+  .btn.sml {
+    border: 2px solid #1F2B55;
+    font-size: 14px;
+    box-shadow: none;
+    padding: 5px 12px;
+    font-weight: bold;
+    margin: 10px 0 0 0;
+    background: #1F2B55;
+    color: #FFF;
+  }
+  a.btn.sml:hover,
+  .btn.sml:hover {
+    border: 2px solid #1F2B55;
+    color: #1F2B55;
+    background: transparent;
+  }
 
 p {
   color: var(--text);
@@ -734,29 +751,42 @@ body.vanilla fieldset legend {
 }
 
 /* Table styling */
-.clause-toggle table {
+.clause-toggle table,
+.emissions-table {
   width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+  border-collapse: collapse;
+  font-size: 14px;
+  border-bottom: 1px solid #cfd5f4;
+  margin-bottom: 10px;
 }
 
 .clause-toggle th,
-.clause-toggle td {
+.clause-toggle td,
+.emissions-table th,
+.emissions-table td {
   padding: 0.7em 0;
   border-bottom: 1px solid #5464c736;
   text-align: left;
   vertical-align: top;
+  padding: 10px;
 }
 
-.clause-toggle th {
+.clause-toggle th,
+.emissions-table th {
   font-weight: 600;
 }
 
 .clause-toggle tr:nth-child(even) td {
 }
 
-.clause-toggle tr:last-of-type td {
+.clause-toggle tr:last-of-type td,
+.emissions-table tr:last-of-type td {
   border-bottom: none;
+}
+
+.clause-toggle tr:hover,
+.emissions-table tr:hover {
+  background: #e9ebf6;
 }
 
 /* Responsive tweaks */
@@ -824,3 +854,7 @@ body.vanilla fieldset legend {
     background: #f4f4ea;
     max-height: 70vh;
 }
+.f-html {
+  max-width: 700px;
+}
+

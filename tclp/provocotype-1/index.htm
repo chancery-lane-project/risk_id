@@ -179,13 +179,11 @@
           } else if (selected && selected.id && selected.id.startsWith('Contract') && selected.id !== 'Contract5') {
             // Sample contract selected - fetch content and create file-like object
             try {
-              console.log('Processing sample contract...');
               const id = selected.id || '';
               const m = id.match(/^Contract(\d+)$/);
               if (!m) throw new Error('Invalid sample contract selection.');
               const num = m[1];
               const sampleUrl = `assets/sample-contracts/contract${num}.htm`;
-              console.log('Loading sample from:', sampleUrl);
 
               const resp = await fetch(sampleUrl);
               if (!resp.ok) throw new Error('Failed to load sample contract.');
@@ -193,7 +191,6 @@
               const tmp = document.createElement('div');
               tmp.innerHTML = html;
               const text = tmp.textContent || tmp.innerText || '';
-              console.log('Extracted text length:', text.length);
 
               // Create a file-like object from the text
               const blob = new Blob([text], { type: 'text/plain' });
@@ -218,63 +215,47 @@
 
           // Single processing flow for both uploaded files and sample contracts
           try {
-            console.log('Processing file:', fileToProcess.name);
-            
-            // Call /process/ endpoint
-            console.log('Calling /process/ endpoint...');
             const formData = new FormData();
             formData.append('files', fileToProcess, fileToProcess.name);
             formData.append('is_folder', 'false');
             
             const resp = await fetch('/process/', { method: 'POST', body: formData });
-            console.log('Process response status:', resp.status);
             if (!resp.ok) {
               const errTxt = await resp.text();
               throw new Error(errTxt || 'Request failed');
             }
             const data = await resp.json();
-            console.log('Process response received:', data);
 
             // Call /find_clauses/ endpoint
             let recommendResult = null;
             try {
-              console.log('Calling /find_clauses/ endpoint...');
               const clauseFormData = new FormData();
               clauseFormData.append('file', fileToProcess, fileToProcess.name);
               const clauseResp = await fetch('/find_clauses/', { method: 'POST', body: clauseFormData });
-              console.log('Clause response status:', clauseResp.status);
               if (clauseResp.ok) {
                 recommendResult = await clauseResp.json();
-                console.log('Clause response received:', recommendResult);
               } else {
                 const errTxt = await clauseResp.text();
                 throw new Error(errTxt || 'Clause detection failed');
               }
             } catch (e) {
-              console.error('Error in clause detection:', e);
               recommendResult = null;
             }
 
             // Store results in sessionStorage
             try {
-              console.log('Storing recommendResult in sessionStorage...');
               sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
-              console.log('recommendResult stored successfully');
             } catch (e) {
-              console.error('Error storing recommendResult:', e);
             }
 
             try {
-              console.log('Storing processResult in sessionStorage...');
               sessionStorage.setItem('processResult', JSON.stringify(data));
               sessionStorage.setItem('contractName', displayName);
-              console.log('processResult and contractName stored successfully');
             } catch (e) {
               console.error('Error storing processResult:', e);
             }
 
             // Navigate to report page
-            console.log('About to navigate to index2.htm...');
             window.location.href = '/index2.htm';
           } catch (err) {
             console.error('Error in form submission:', err);

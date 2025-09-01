@@ -1,0 +1,442 @@
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get quick insights on your contracts</title>
+  <meta name="description" content="">
+  <link rel="icon" href="assets/img/favicon.svg">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet">
+  <!-- lightbox -->
+  <link rel="stylesheet" href="assets/css/fancybox.css">
+  <style>
+    .emissions-table-container {
+      margin-top: 1rem;
+    }
+    
+    .emissions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .emissions-table th,
+    .emissions-table td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    
+    .emissions-table th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .emissions-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    .emissions-table tr:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .emissions-table h5 {
+      margin-bottom: 0.5rem;
+      color: #333;
+      font-weight: 600;
+    }
+  </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const contractName =
+        params.get('contract') ||
+        params.get('Contract') ||
+        sessionStorage.getItem('contractName'); // if you used sessionStorage earlier
+
+      const titleEl = document.getElementById('contract-title');
+      if (titleEl && contractName) {
+        titleEl.textContent = contractName;
+      }
+
+      // Load process result (classification + highlighted URL)
+      try {
+        const raw = sessionStorage.getItem('processResult');
+        if (raw) {
+          const data = JSON.parse(raw);
+          // Update score label (basic example)
+          const scoreEls = document.querySelectorAll('.score-overview');
+          scoreEls.forEach(el => el.classList.remove('active'));
+          const map = {
+            'unlikely': 'none',
+            'possible': 'basic',
+            'likely': 'moderate',
+            'very likely': 'strong'
+          };
+          const cls = map[(data.classification || '').toLowerCase()] || 'none';
+          const target = document.querySelector('.score-overview.' + cls);
+          if (target) target.classList.add('active');
+
+          // Add link to highlighted output if available
+          const p = document.querySelector('.context');
+          if (p && data.highlighted_output_url) {
+            const a = document.createElement('a');
+            a.href = data.highlighted_output_url;
+            a.target = '_blank';
+            a.textContent = 'Open highlighted analysis';
+            const sep = document.createTextNode(' ');
+            p.appendChild(document.createElement('br'));
+            p.appendChild(sep);
+            p.appendChild(a);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    });
+  </script></head>
+  
+
+
+<body class=""><!-- use classes "vanilla" for minimal styling mode, or "animated" for changing background gradient -->
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header row" role="banner">
+    <div class="container">
+      <h1 class="site-title">
+        <img src="assets/img/logo-white.svg" class="white">
+        <img src="assets/img/logo.svg" class="blue">
+      </h1>
+      <!--
+      <nav aria-label="Primary" class="site-nav">
+        <a class="btn" href="https://chancerylaneproject.org/" target="_blank">Main site</a>
+      </nav> -->
+    </div>
+  </header>
+
+  <main id="main" class="site-main row" role="main">
+    <section class="container">
+      <div class="row report">
+
+          <section class="summary">
+            <div class="govuk-phase-banner">
+              <p class="govuk-phase-banner__content">
+                <strong class="govuk-tag govuk-phase-banner__content__tag">
+                  Alpha
+                </strong>
+                <span class="govuk-phase-banner__text">
+                  Learn how to reduce emissions and build climate resilience in a contract
+                </span>
+              </p>
+            </div>
+            <h2 id="contract-title">Total Facilities Management Agreement (TFMA).DOCX</h2>
+            <div class="row meta-data-summary">
+              <span>
+                  <strong>Sector:</strong><br>
+                  Public Sector
+              </span>
+              <span>
+                  <strong>Subject matter:</strong><br>
+                  Service Level Agreement
+              </span>
+              <span>
+                  <strong>Content:</strong><br>
+                  5 pages / 3,116 words
+              </span>
+              <span>
+                  <strong>Analysis time:</strong><br>
+                  5 seconds
+              </span>
+            </div>
+            <div class="row scoring">
+              <div class="col score-summary">
+
+                <p class="score-overview none active">None</p>
+                <p class="score-overview basic">BASIC</p>
+                <p class="score-overview moderate">Moderate</p>
+                <p class="score-overview strong">Strong</p>
+
+
+                <p class="context"><strong>Climate-aligned language detected</strong><br>Some climate-aligned clauses included and mentions of carbon footprint.<br> <a href="/output/highlighted_output_1756725540.html" target="_blank">Open highlighted analysis</a></p>
+              </div>
+              <div class="col quant-summary">
+                <p><strong>3</strong> Reccomended clauses</p>
+              </div>
+              <div class="col quant-summary">
+                <p><strong>6</strong> Possible emissions addressed</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="row">
+              <h2>Recommended clauses to review</h2>
+              <div class="row clause-stack" id="recommendation-list"><article class="clause">
+                <div class="row clause-inner">
+                  <h3 class="clause-title">Allocating Scope 1, 2 and 3 Emissions for Leased Assets</h3>
+                  <p class="clause-excerpt">This clause allocates responsibility for measuring and reporting the scope 1, 2 and 3 emissions of leased assets between the Lessor and Lessee. By contractually obliging the parties to take responsibility for measuring and reporting emissions from leased assets, this clause reduces the possibility of missing, duplicating or inaccurately reporting emissions associated with the lease.</p>
+                </div>
+                <div class="row clause-toggle">
+                  <h4>Show emissions and how they're addressed</h4>
+                  <div class="row clause-toggle-inner">
+                    <p><strong>Reasoning:</strong> This clause directly addresses GHG emissions tracking and reporting, which is highly relevant for a facilities management agreement. It establishes clear obligations for measuring and reporting emissions, aligning with climate goals and supporting sustainability efforts in property management.</p>
+                    
+                      <div class="emissions-table-container">
+                        <h5>Emissions Sources and Topics:</h5>
+                        <table class="emissions-table">
+                          <thead>
+                            <tr>
+                              <th>Emission Source</th>
+                              <th>Topic</th>
+                              <th>Justification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            
+                              <tr>
+                                <td>Operational Emissions</td>
+                                <td>Operational Emissions</td>
+                                <td>The clause addresses Scope 1 and Scope 2 emissions from both Lessor and Lessee operated resources, which are directly related to energy consumption and operational activities.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Leased Asset Emissions</td>
+                                <td>Green Finance</td>
+                                <td>By clearly defining responsibilities for measuring and reporting emissions from leased assets, the clause helps mitigate emissions associated with the use of these assets.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Reporting Accuracy</td>
+                                <td>Regulatory Reporting</td>
+                                <td>The emphasis on accurate measurement and reporting reduces the risk of misreporting, which can lead to unaddressed emissions and enhances overall climate accountability.</td>
+                              </tr>
+                            
+                          </tbody>
+                        </table>
+                      </div>
+                    
+                  </div>
+                </div>
+              </article><article class="clause">
+                <div class="row clause-inner">
+                  <h3 class="clause-title">Climate Contract Risk Sharing (ex Force Majeure)</h3>
+                  <p class="clause-excerpt">Amendments and additions to standard Force Majeure agreements to ensure contracting parties work together to balance financial risks and avoid unintended adverse environmental and social issues. This clause enables parties to work together in good faith to take control of contractual climate risk and plan to mitigate negative climate and social impacts arising from adverse events whilst looking after commercial needs.</p>
+                </div>
+                <div class="row clause-toggle">
+                  <h4>Show emissions and how they're addressed</h4>
+                  <div class="row clause-toggle-inner">
+                    <p><strong>Reasoning:</strong> This clause helps manage climate-related disruptions and risks, which is essential for a facilities management contract. It promotes collaboration between parties to address climate events, ensuring continuity of service while mitigating environmental and financial impacts.</p>
+                    
+                      <div class="emissions-table-container">
+                        <h5>Emissions Sources and Topics:</h5>
+                        <table class="emissions-table">
+                          <thead>
+                            <tr>
+                              <th>Emission Source</th>
+                              <th>Topic</th>
+                              <th>Justification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            
+                              <tr>
+                                <td>Embedded Carbon</td>
+                                <td>Carbon Offsetting &amp; Management</td>
+                                <td>The clause addresses wasted Embedded Carbon from products or services that are manufactured but not delivered or used, thereby reducing emissions associated with unnecessary production.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Operational Emissions</td>
+                                <td>Operational Emissions</td>
+                                <td>By ensuring that parties collaborate to maintain Disruption Liquidity Ratios, the clause helps mitigate operational emissions that could arise from financial distress and inefficient resource use during a Climate Change Event.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Climate Resilience</td>
+                                <td>Climate Resilience</td>
+                                <td>The clause emphasizes the need for ongoing impact analysis and adaptation strategies, enhancing climate resilience by encouraging parties to plan for and mitigate future climate-related disruptions.</td>
+                              </tr>
+                            
+                          </tbody>
+                        </table>
+                      </div>
+                    
+                  </div>
+                </div>
+              </article><article class="clause">
+                <div class="row clause-inner">
+                  <h3 class="clause-title">Sustainability Clauses in Supply Chain Contracts</h3>
+                  <p class="clause-excerpt">Using supply chain contracts to extend positive climate change measures adopted in one country to contracting parties in other countries that may have less of a legislative focus on climate. This clause assists in achieving multinational corporate carbon reduction targets and addressing the imbalance in climate regulatory activity between regions, with an option to extend obligations to subcontractors.</p>
+                </div>
+                <div class="row clause-toggle">
+                  <h4>Show emissions and how they're addressed</h4>
+                  <div class="row clause-toggle-inner">
+                    <p><strong>Reasoning:</strong> This clause ensures suppliers adhere to sustainability standards, which can be adapted to a facilities management context. It allows the service provider to enforce environmental practices within its supply chain, supporting broader climate objectives without altering the core service agreement.</p>
+                    
+                      <div class="emissions-table-container">
+                        <h5>Emissions Sources and Topics:</h5>
+                        <table class="emissions-table">
+                          <thead>
+                            <tr>
+                              <th>Emission Source</th>
+                              <th>Topic</th>
+                              <th>Justification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            
+                              <tr>
+                                <td>Operational Emissions</td>
+                                <td>Operational Emissions</td>
+                                <td>By requiring compliance with environmental standards and the Environmental Action Plan, the clause helps mitigate operational emissions from facilities and equipment used in the supply chain.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Regulatory Compliance</td>
+                                <td>Regulatory Reporting</td>
+                                <td>The emphasis on compliance with environmental legislation and the sustainability policy ensures that all parties are held accountable, reducing the risk of emissions resulting from regulatory non-compliance.</td>
+                              </tr>
+                            
+                              <tr>
+                                <td>Supply Chain Emissions</td>
+                                <td>Supply Chain </td>
+                                <td>The clause promotes the reduction of supply chain emissions by extending sustainability measures to subcontractors, ensuring that all parties adhere to climate-focused practices.</td>
+                              </tr>
+                            
+                          </tbody>
+                        </table>
+                      </div>
+                    
+                  </div>
+                </div>
+              </article></div>
+          </section>
+
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer row" role="contentinfo">
+    <div class="container">
+    </div>
+  </footer>
+
+  <div class="bg-grad"></div>
+
+  <!-- lightbox -->
+  <script src="assets/js/fancybox.umd.js"></script>
+  <script src="assets/js/main.js" defer=""></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load recommendations from sessionStorage
+      try {
+        console.log('Loading recommendations from sessionStorage...');
+        const raw = sessionStorage.getItem('recommendResult');
+        console.log('Raw recommendResult:', raw);
+        
+        if (raw) {
+          const data = JSON.parse(raw);
+          console.log('Parsed data:', data);
+          const list = document.getElementById('recommendation-list');
+          console.log('Recommendation list element:', list);
+          console.log('Data matches:', data.matches);
+          
+          if (list && data.matches && data.matches.length > 0) {
+            // Clear any existing content and replace with real recommendations
+            list.innerHTML = '';
+            
+            // Count unique topics across all matches
+            const allTopics = new Set();
+            data.matches.forEach(match => {
+              if (match.emissions_sources && match.emissions_sources.length > 0) {
+                match.emissions_sources.forEach(emission => {
+                  if (emission.topic_name && emission.topic_name !== 'N/A' && emission.topic_name !== '') {
+                    allTopics.add(emission.topic_name);
+                  }
+                });
+              }
+            });
+            const uniqueTopicCount = allTopics.size;
+            
+            // Update the hardcoded count in the summary section
+            const summaryElements = document.querySelectorAll('.quant-summary p strong');
+            summaryElements.forEach(element => {
+              if (element.textContent === '2' && element.parentElement.textContent.includes('Possible emissions addressed')) {
+                element.textContent = uniqueTopicCount;
+              }
+            });
+            
+            data.matches.forEach((m, index) => {
+              const article = document.createElement('article');
+              article.className = 'clause';
+              article.innerHTML = `
+                <div class="row clause-inner">
+                  <h3 class="clause-title">${m.name || 'Unnamed clause'}</h3>
+                  <p class="clause-excerpt">${m.excerpt || 'No excerpt available'}</p>
+                </div>
+                <div class="row clause-toggle">
+                  <h4>Show emissions and how they're addressed</h4>
+                  <div class="row clause-toggle-inner">
+                    <p><strong>Reasoning:</strong> ${m.reason || 'No reasoning provided'}</p>
+                    ${m.emissions_sources && m.emissions_sources.length > 0 ? `
+                      <div class="emissions-table-container">
+                        <h5>Emissions Sources and Topics:</h5>
+                        <table class="emissions-table">
+                          <thead>
+                            <tr>
+                              <th>Emission Source</th>
+                              <th>Topic</th>
+                              <th>Justification</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${m.emissions_sources.map(emission => `
+                              <tr>
+                                <td>${emission.emission_label || 'N/A'}</td>
+                                <td>${emission.topic_name || 'N/A'}</td>
+                                <td>${emission.justification || 'N/A'}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      </div>
+                    ` : '<p><strong>Climate emissions sources addressed:</strong> No specific emissions sources identified</p>'}
+                  </div>
+                </div>
+              `;
+              list.appendChild(article);
+            });
+          } else {
+            // If no recommendations, show a message
+            const list = document.getElementById('recommendation-list');
+            if (list) {
+              list.innerHTML = '<p>No specific clauses were recommended for this contract.</p>';
+            }
+          }
+        } else {
+          // If no recommendResult in sessionStorage, show a message
+          const list = document.getElementById('recommendation-list');
+          if (list) {
+            list.innerHTML = '<p>No recommendations available. Please try uploading a contract or selecting a sample.</p>';
+          }
+        }
+      } catch (e) {
+        console.error('Error loading recommendations:', e);
+        console.error('Error details:', e.message);
+        console.error('Error stack:', e.stack);
+        // Show error message
+        const list = document.getElementById('recommendation-list');
+        if (list) {
+          list.innerHTML = '<p>Error loading recommendations. Please try again.</p>';
+        }
+      }
+    });
+  </script>
+
+
+
+</body></html>
