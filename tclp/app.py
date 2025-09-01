@@ -5,6 +5,9 @@ import shutil
 import traceback
 from urllib.parse import unquote
 
+# Suppress tokenizers parallelism warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import joblib
 import pandas as pd
 import torch
@@ -56,16 +59,24 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
 # Absolute paths for directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 temp_dir = os.path.join(BASE_DIR, "temp_uploads")
-output_dir = os.path.join(temp_dir, "output")
+# Make output persist outside temp_dir so cleanup doesn't remove files we link to
+output_dir = os.path.join(BASE_DIR, "output")
 MODEL_PATH = "models/CC_BERT/CC_model_detect"
 CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
-RISK_INDICATORS = "data/risk_categorization_results.csv"
-RISK_TAXONOMY = 'data/risk_taxonomy.xlsx'
-INDEX_PATH = "index.html"
+EMISSION_INDICATORS = "data/full_emissions_table.csv"
+EMISSION_TAXONOMY = 'data/emissions_topics.csv'
+INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
+ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
 CLUSTERING_MODEL = 'models/clustering_model.pkl'
 UMAP_MODEL = 'models/umap_model.pkl'
+
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.join(BASE_DIR, "provocotype-1", "assets")),
+    name="assets",
+)
 
 os.makedirs(output_dir, exist_ok=True)
 app.mount("/output", StaticFiles(directory=output_dir), name="output")
@@ -73,12 +84,13 @@ app.mount("/output", StaticFiles(directory=output_dir), name="output")
 print("[INFO] Loading model and data...")
 tokenizer, d_model, c_model, names, docs, final_df = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
 clause_tags = pd.read_excel(CLAUSE_TAGS)
-risk_df = pd.read_csv(RISK_INDICATORS)
+emission_df = pd.read_csv(EMISSION_INDICATORS)
 with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
-risk_taxonomy = pd.read_excel(RISK_TAXONOMY)
-taxonomy_html = risk_taxonomy.to_html(index=False, classes="table table-sm")
-utils.save_file("risk_taxonomy.html", taxonomy_html)
+emission_taxonomy = pd.read_csv(EMISSION_TAXONOMY)
+taxonomy_html = emission_taxonomy.to_html(index=False, classes="table table-sm")
+# Save emission taxonomy into the served output directory
+utils.save_file(os.path.join(output_dir, "emission_taxonomy.html"), taxonomy_html)
 umap_model = joblib.load(UMAP_MODEL)
 device = torch.device("cpu")
 
@@ -133,7 +145,13 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         
         if is_folder == "false":
             highlighted_output = utils.highlight_climate_content(result_df)
-            utils.save_file("highlighted_output.html", highlighted_output)
+            # Save into output directory with timestamp to ensure freshness
+            import time
+            timestamp = int(time.time())
+            filename = f"highlighted_output_{timestamp}.html"
+            filepath = os.path.join(output_dir, filename)
+            utils.save_file(filepath, highlighted_output)
+            print(f"Saved highlighted output to: {filepath}")
 
         contract_df = utils.create_contract_df(
             result_df, processed_contracts, labelled=False
@@ -147,15 +165,14 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         response = {
             "classification": result,
             "highlighted_content": highlighted_output,
+            "highlighted_output_url": f"/output/{filename}",
             "bucket_labels": {
                 "cat0": CAT0,
                 "cat1": CAT1,
                 "cat2": CAT2,
                 "cat3": CAT3
-            
-                }}
-
-        print(response)
+            }
+        }
 
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -253,7 +270,7 @@ async def find_clauses(file: UploadFile = File(...)):
 
     1. Your response must be a JSON of exactly three objects, each with the keys "Clause Name" and "Reasoning".
     3. Only select from the clauses provided — do not invent new ones.
-    4. Remember the contract’s **content and purpose**. Their goal is likely not to avoid climate-related risks, but to meet other business or legal needs. We are telling them where they can inject climate-aligned language into the existing contract but the existing contract and its goals are the most important consideration.
+    4. Remember the contract’s **content and purpose**. Their goal is likely not to reduce their emissions, but to meet other business or legal needs. We are telling them where they can inject climate-aligned language into the existing contract but the existing contract and its goals are the most important consideration.
     5. Pay close attention to what the contract is **doing** — the transaction type, structure, and key obligations — not just who the parties are or what sector they operate in.
     - Clauses must fit the **actual function and scope** of the contract.
     - For example, do not recommend a clause about land access if the contract is about software licensing.
@@ -278,6 +295,14 @@ async def find_clauses(file: UploadFile = File(...)):
 
     response_text = response.choices[0].message.content
     df_response = utils.parse_response(response_text)
+    
+    # Check if parsing was successful
+    if df_response is None:
+        print("Failed to parse LLM response, returning empty recommendations")
+        return {
+            "matches": [],
+            "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
+        }
     
     missing = []
     for clause in df_response["Clause Name"]:
@@ -310,19 +335,66 @@ async def find_clauses(file: UploadFile = File(...)):
         response_text = retry.choices[0].message.content
         df_response = utils.parse_response(response_text)
         
-    #find the clause names in the risk_df
-    df_response = utils.get_risk_label(df_response, risk_df)
+        # Check if retry parsing was successful
+        if df_response is None:
+            print("Failed to parse retry LLM response, returning empty recommendations")
+            return {
+                "matches": [],
+                "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
+            }
+        
+    #find the clause names in the emission_df
+    df_response = utils.get_emission_label(df_response, emission_df)
+
+    # Build matches with full text and excerpts
+    matches = []
+    for _, row in df_response.iterrows():
+        clause_name = row["Clause Name"].replace(".txt", "")
+        
+        # Get the full clause text using get_clause
+        try:
+            clause_data = get_clause(clause_name)
+            full_text = clause_data["text"]
+            
+            # Extract first two sentences for excerpt
+            import re
+            sentences = re.split(r'[.!?]+', full_text.strip())
+            sentences = [s.strip() for s in sentences if s.strip()]
+            excerpt = '. '.join(sentences[:2]) + '.' if len(sentences) >= 2 else full_text[:200] + '...'
+            
+        except Exception as e:
+            print(f"Error getting clause text for {clause_name}: {e}")
+            full_text = "Clause text not available"
+            excerpt = "Clause text not available"
+        
+        # Handle the emissions_sources data structure
+        combined_labels = row.get("combined_labels")
+        if pd.notna(combined_labels):
+            try:
+                # Try to parse as JSON if it's a string
+                if isinstance(combined_labels, str):
+                    import json
+                    emissions_sources = json.loads(combined_labels)
+                elif isinstance(combined_labels, list):
+                    emissions_sources = combined_labels
+                else:
+                    emissions_sources = []
+            except (json.JSONDecodeError, TypeError):
+                emissions_sources = []
+        else:
+            emissions_sources = []
+            
+        matches.append({
+            "name": clause_name,
+            "reason": row["Reasoning"],
+            "emissions_sources": emissions_sources,
+            "excerpt": excerpt,
+            "full_text": full_text
+        })
 
     return {
-        "matches": [
-            {
-                "name": row["Clause Name"].replace(".txt", ""),
-                "reason": row["Reasoning"],
-                "risks": row["combined_labels"],
-            }
-            for _, row in df_response.iterrows()
-        ],
-        "risk_taxonomy_url": "/output/risk_taxonomy.html"
+        "matches": matches,
+        "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
     }
 
 def normalize_title(s: str) -> str:
@@ -363,13 +435,13 @@ def get_clause(clause_name: str):
     idx = names.index(full_title)
     return {"name": full_title, "text": docs[idx]}
 
-@app.get("/risk_taxonomy", response_class=HTMLResponse)
-async def serve_risk_taxonomy():
+@app.get("/emission_taxonomy", response_class=HTMLResponse)
+async def serve_emission_taxonomy():
     """
-    Return the risk taxonomy as an HTML table so the frontend can show it in a modal.
+    Return the emission taxonomy as an HTML table so the frontend can show it in a modal.
     """
-    # risk_taxonomy is already loaded at startup
-    html = risk_taxonomy.to_html(index=False, classes="table table-sm")
+    # emission_taxonomy is already loaded at startup
+    html = emission_taxonomy.to_html(index=False, classes="table table-sm")
     return html
 
 # --- Serve Frontend ---
@@ -378,6 +450,19 @@ def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     if not os.path.exists(INDEX_PATH):
         raise RuntimeError(f"{INDEX_PATH} not found")
     return FileResponse(INDEX_PATH, media_type="text/html")
+
+# Optional: serve the secondary frontend directly
+@app.get("/index2.htm", response_class=FileResponse)
+def read_index2_htm(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+    if not os.path.exists(ALT_INDEX_PATH):
+        raise RuntimeError(f"{ALT_INDEX_PATH} not found")
+    return FileResponse(ALT_INDEX_PATH, media_type="text/html")
+
+@app.get("/index2", response_class=FileResponse)
+def read_index2(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+    if not os.path.exists(ALT_INDEX_PATH):
+        raise RuntimeError(f"{ALT_INDEX_PATH} not found")
+    return FileResponse(ALT_INDEX_PATH, media_type="text/html")
 
 # --- Run with Uvicorn ---
 if __name__ == "__main__":

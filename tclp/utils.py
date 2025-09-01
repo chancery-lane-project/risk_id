@@ -1008,7 +1008,8 @@ def parse_response(response_text):
     Returns a list of clauses with 'Clause Name' and 'Reasoning'.
     """
     if not response_text.strip():
-        raise ValueError("Empty response text")
+        print("Empty response text received")
+        return None
 
     # Remove surrounding triple backticks or Markdown code fences if present
     response_text = response_text.strip()
@@ -1019,14 +1020,21 @@ def parse_response(response_text):
     try:
         clauses = json.loads(response_text)
         if not isinstance(clauses, list):
-            raise ValueError("Expected a list of clause dictionaries.")
+            print(f"Expected a list of clause dictionaries, got: {type(clauses)}")
+            return None
         df = pd.DataFrame(clauses)
         for c in clauses:
             if not all(k in c for k in ["Clause Name", "Reasoning"]):
-                raise ValueError("Missing expected keys in clause object.")
+                print(f"Missing expected keys in clause object: {c}")
+                return None
         return df[["Clause Name", "Reasoning"]]
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON format: {e}")
+        print(f"Invalid JSON format: {e}")
+        print(f"Response text: {response_text}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error parsing response: {e}")
+        return None
 
 
 # Risk utils#
@@ -1103,5 +1111,34 @@ def get_risk_label(response_df, risk_df):
             print(f"Clause '{name}' found in risk categories with label: {risk_label}.")
         else:
             print(f"Clause '{name}' not found in risk categories.")
+            # Set a default value to avoid NaN
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = "No specific risks identified"
             
+    return response_df
+
+def get_emission_label(response_df, emission_df):
+    for name in response_df['Clause Name']:
+        # Find all rows in emission_df that match this clause name
+        matches = emission_df[emission_df['name'] == name]
+        if not matches.empty:
+            # Build a list of dicts for each match
+            emission_info = []
+            for _, row in matches.iterrows():
+                info = {
+                    "emission_label": row.get("emission_label", ""),
+                    "topic_name": row.get("topic_name", ""),
+                    "justification": row.get("justification", "")
+                }
+                emission_info.append(info)
+            # Convert the list to a JSON string for pandas storage
+            import json
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = json.dumps(emission_info)
+            print(f"Clause '{name}' found in emission categories with labels: {[e['emission_label'] for e in emission_info]}.")
+        else:
+            print(f"Clause '{name}' not found in emission categories.")
+            response_df.loc[response_df['Clause Name'] == name, 'combined_labels'] = json.dumps([{
+                "emission_label": "No specific emissions sources identified",
+                "topic_name": "",
+                "justification": ""
+            }])
     return response_df
