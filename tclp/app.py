@@ -12,7 +12,7 @@ import joblib
 import pandas as pd
 import torch
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -65,7 +65,7 @@ MODEL_PATH = "models/CC_BERT/CC_model_detect"
 CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
-EMISSION_INDICATORS = "data/full_emissions_table.csv"
+EMISSION_INDICATORS = "data/full_emissions_table_2.csv"
 EMISSION_TAXONOMY = 'data/emissions_topics.csv'
 INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
 ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
@@ -82,7 +82,7 @@ os.makedirs(output_dir, exist_ok=True)
 app.mount("/output", StaticFiles(directory=output_dir), name="output")
 
 print("[INFO] Loading model and data...")
-tokenizer, d_model, c_model, names, docs, final_df, child_names, name_to_child = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
+tokenizer, d_model, c_model, names, docs, final_df, child_names, name_to_child, name_to_url = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
 clause_tags = pd.read_excel(CLAUSE_TAGS)
 emission_df = pd.read_csv(EMISSION_INDICATORS)
 with open(CLUSTERING_MODEL, 'rb') as f:
@@ -100,7 +100,7 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1")
 
 @app.post("/process/")
-async def process_contract(files: list[UploadFile], is_folder: str = Form("false")):
+async def process_contract(files: list[UploadFile]):
     """
     Endpoint to process a contract file or folder.
     """
@@ -143,15 +143,14 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         result_df, _ = utils.create_result_df(results, processed_contracts)
         
         
-        if is_folder == "false":
-            highlighted_output = utils.highlight_climate_content(result_df)
-            # Save into output directory with timestamp to ensure freshness
-            import time
-            timestamp = int(time.time())
-            filename = f"highlighted_output_{timestamp}.html"
-            filepath = os.path.join(output_dir, filename)
-            utils.save_file(filepath, highlighted_output)
-            print(f"Saved highlighted output to: {filepath}")
+        highlighted_output = utils.highlight_climate_content(result_df)
+        # Save into output directory with timestamp to ensure freshness
+        import time
+        timestamp = int(time.time())
+        filename = f"highlighted_output_{timestamp}.html"
+        filepath = os.path.join(output_dir, filename)
+        utils.save_file(filepath, highlighted_output)
+        print(f"Saved highlighted output to: {filepath}")
 
         contract_df = utils.create_contract_df(
             result_df, processed_contracts, labelled=False
@@ -394,12 +393,14 @@ async def find_clauses(file: UploadFile = File(...)):
         else:
             emissions_sources = []
         
-        # Get child name from mapping
+        # Get child name and URL from mappings
         child_name = name_to_child.get(clause_name, "")
+        clause_url = name_to_url.get(clause_name, "")
             
         matches.append({
             "name": clause_name,
             "child_name": child_name,
+            "clause_url": clause_url,
             "reason": row["Reasoning"],
             "emissions_sources": emissions_sources,
             "excerpt": excerpt,

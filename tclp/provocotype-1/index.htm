@@ -60,7 +60,7 @@
                     <div id="Contract1-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Public sector</span>
                       <span><strong>Subject matter: </strong><br />Service Level Agreement</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract1.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract1.txt">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -72,7 +72,7 @@
                     <div id="Contract2-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Construction</span>
                       <span><strong>Subject matter: </strong><br />Construction Contract</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract2.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract2.txt">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -84,7 +84,7 @@
                     <div id="Contract3-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Banking and finance</span>
                       <span><strong>Subject matter: </strong><br />Loan Agreement</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract3.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract3.txt">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -96,7 +96,7 @@
                     <div id="Contract4-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Technology</span>
                       <span><strong>Subject matter: </strong><br />Software licensing & services</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract4.htm">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract4.txt">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -183,7 +183,7 @@
               const m = id.match(/^Contract(\d+)$/);
               if (!m) throw new Error('Invalid sample contract selection.');
               const num = m[1];
-              const sampleUrl = `assets/sample-contracts/contract${num}.htm`;
+              const sampleUrl = `assets/sample-contracts/contract${num}.txt`;
 
               const resp = await fetch(sampleUrl);
               if (!resp.ok) throw new Error('Failed to load sample contract.');
