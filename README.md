@@ -42,6 +42,15 @@ This is a **provocatype**:
 - Used in user research sessions to provoke reactions, gather feedback, and validate or invalidate the hypothesis.  
 - Helps us learn whether users prefer guided, ranked clause suggestions over manual search.  
 
+## Limitations
+
+It’s important to note the following constraints of this prototype:
+
+- **Static only**: This is a static prototype. No live analysis or contract processing takes place.  
+- **Concept testing**: It is designed purely to test the *concept* — i.e. does the idea make sense and provide value to users — not to demonstrate working technology.  
+- **Single environment**: It has only been tested in one environment: **Chrome desktop**. Behaviour may differ elsewhere.  
+- **Quick and messy code**: The code has been hacked together quickly and should be considered throwaway. It is not production-quality.  
+
 ## Next Steps
 
 - Test with legal practitioners and in-house teams.  
