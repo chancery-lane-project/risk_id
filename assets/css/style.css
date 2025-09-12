@@ -775,7 +775,6 @@ body.vanilla fieldset legend {
     color: #1C2B58;
   }
   .clause:hover h3 {
-    text-decoration: underline;
   }
   .clause .clause-title a::after {
     bottom: 0;
@@ -804,35 +803,29 @@ body.vanilla fieldset legend {
   background: #f1f3ff;
 }
 
-.clause-toggle h4 {
-  font-size: 0.9em;
+.clause-toggle a.emissions-toggle {
   margin: 0;
-  cursor: pointer;
-  color: #0e49b8;
-  text-decoration: underline;
-  font-weight: 500;
-  padding-left: 19px;
   position: relative;
+  padding: 5px 12px 5px 31px;
 }
 
-.clause-toggle h4:hover {
-  text-decoration: none;
-}
-
-.clause-toggle h4::before {
+.clause-toggle a.emissions-toggle::before {
   content: "+";
-  position: absolute;
-  left: 0;
-  top: -4px;
-  font-weight: 200;
-  font-size: 27px;
-  line-height: 1;
-  color: #0e49b8;
+    position: absolute;
+    left: 10px;
+    top: 1px;
+    font-weight: 200;
+    font-size: 27px;
+    line-height: 1;
+    color: #ffffff;
+    font-weight: 500;
 }
+.clause-toggle a.emissions-toggle:hover::before {color: #1F2B55;}
 
-.clause.open .clause-toggle h4::before {
+
+.clause.open a.emissions-toggle::before {
   content: "–"; /* minus sign */
-  top: -7px;
+  top: -2px;
 }
 
 /* Hidden by default */

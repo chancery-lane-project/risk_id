@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // ====================== CLAUSE DRAWER TOGGLE =====================
   // Toggles an "open" class on the parent .clause and updates the H4 text
   // ================================================================
-  document.querySelectorAll(".clause-toggle h4").forEach(toggle => {
+  document.querySelectorAll(".clause-toggle .emissions-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const toggleWrap = toggle.closest(".clause-toggle");
       const article = toggle.closest(".clause");
@@ -55,8 +55,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Update heading text
       toggle.textContent = isOpen
-        ? "Hide emissions and how they're addressed"
-        : "Show emissions and how they're addressed";
+        ? "Hide emissions"
+        : "Show emissions";
     });
   });
 
