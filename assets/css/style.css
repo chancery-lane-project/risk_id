@@ -192,6 +192,15 @@ a.btn {
     color: #1F2B55;
     background: transparent;
   }
+  a.btn.secondary {
+    border: 2px solid #1F2B55;
+    color: #1F2B55;
+    background: transparent;
+  }
+  a.btn.secondary:hover {
+    background: #1F2B55;
+    color: #FFF;
+  }
 
 p {
   color: var(--text);
@@ -827,6 +836,13 @@ body.vanilla fieldset legend {
   content: "–"; /* minus sign */
   top: -2px;
 }
+
+.right-btns {
+  float: right;
+}
+  .right-btns a.btn.sml {
+    margin: 0 0 0 5px;
+  }
 
 /* Hidden by default */
 .clause-toggle-inner {
