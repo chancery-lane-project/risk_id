@@ -211,12 +211,12 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => {
         const chosen = contractRadios.find(r => r.checked);
         if (chosen) {
-          // e.g. "Contract1" → "contract-1.htm"
-          const page = chosen.id.toLowerCase().replace("contract", "contract-report-") + ".htm";
+          // e.g. "Contract1" → "contract-1.html"
+          const page = chosen.id.toLowerCase().replace("contract", "contract-report-") + ".html";
           window.location.href = page;
         } else {
           // fallback if somehow no radio is checked
-          window.location.href = "contract-report-1.htm";
+          window.location.href = "contract-report-1.html";
         }
       }, 12000);
     });
