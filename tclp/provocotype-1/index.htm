@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Get quick insights on your contracts heloo</title>
+  <title>Get quick insights on your contracts</title>
   <meta name="description" content="">
   <link rel="icon" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/style.css">
@@ -12,10 +12,42 @@
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <!-- lightbox -->
   <link rel="stylesheet" href="assets/css/fancybox.css" />
+  <!-- Fathom - beautiful, simple website analytics -->
+  <script src="https://cdn.usefathom.com/script.js" data-site="NLHUCFHP" defer></script>
+  <!-- / Fathom -->
 </head>
 
 <body class=""><!-- use classes "vanilla" for minimal styling mode, or "animated" for changing background gradient -->
   <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- loading screen -->
+  <div id="loading-screen">
+    <div class="loading-state playing">
+      <div class="image"></div>
+      <div class="wave"></div>
+      <div class="wave"></div>
+      <div class="wave"></div>
+      <div class="loading-inner-wrapper">
+        <div class="loading-content-wrap" id="state-1">
+          <span class="spinner"><img src="assets/img/loading-state-1.gif" /></span>
+          <p><strong>Analysing contract</strong><p>
+          <p>Scanning structure, text and metadata</p>
+        </div>
+        <div class="loading-content-wrap" id="state-2">
+          <span class="spinner"><img src="assets/img/loading-state-2.gif" /></span>
+          <p><strong>Finding relevant clauses</strong><p>
+          <p>Matching content to legal topics</p>
+        </div>
+        <div class="loading-content-wrap" id="state-3">
+          <span class="spinner"><img src="assets/img/loading-state-3.gif" /></span>
+          <p><strong>Preparing report</strong><p>
+          <p>Ranking insights and formatting your summary</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-grad"></div>
+  </div>
+  <!-- end loading screen -->
 
   <header class="site-header row" role="banner">
     <div class="container">
@@ -33,7 +65,7 @@
   <main id="main" class="site-main row" role="main">
     <section class="container">
       <div class="home-actions">
-        <h2>Get quick contract insights to cut emissions and boost sustainability</h2>
+        <h2>Get fast insights on your contracts to reduce emissions</h2>
       </div>
 
         <div class="select-contract">
@@ -60,7 +92,7 @@
                     <div id="Contract1-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Public sector</span>
                       <span><strong>Subject matter: </strong><br />Service Level Agreement</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract1.txt">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-1.html">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -72,7 +104,7 @@
                     <div id="Contract2-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Construction</span>
                       <span><strong>Subject matter: </strong><br />Construction Contract</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract2.txt">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-2.html">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -84,7 +116,7 @@
                     <div id="Contract3-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Banking and finance</span>
                       <span><strong>Subject matter: </strong><br />Loan Agreement</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract3.txt">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-3.html">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -96,7 +128,7 @@
                     <div id="Contract4-item-hint" class="govuk-hint govuk-radios__hint">
                       <span><strong>Sector: </strong><br />Technology</span>
                       <span><strong>Subject matter: </strong><br />Software licensing & services</span>
-                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="/assets/sample-contracts/contract4.txt">Preview contract</a></span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-4.html">Preview contract</a></span>
                     </div>
                   </label>
                 </div>
@@ -106,12 +138,12 @@
                   <label class="govuk-label govuk-radios__label" for="Contract5">
                     <span>Upload your own contract</span>
                     <div id="Contract5-item-hint" class="govuk-hint govuk-radios__hint">
-                      <span><strong>Accepted files: </strong><br />DOCX, DOC, PDF</span>
+                      <span><strong>Accepted files: </strong><br />TXT</span>
                       <span><strong>Max file size: </strong><br />10MB</span>
                     </div>
                   </label>
                   <div class="upload">
-                    <input id="file" class="upload__input" type="file" accept=".txt,.pdf,.doc,.docx" />
+                    <input id="file" class="upload__input" type="file" accept=".txt" />
                     <label for="file" class="upload__btn">Choose file</label>
                     <span class="upload__filename" aria-live="polite"></span>
                   </div>
@@ -122,7 +154,7 @@
               </div>
             </fieldset>
           </div>
-          <button type="submit" class="yellow">Get insights</button>
+          <button id="getInsights" type="submit" class="yellow">Get insights</button>
         </form>
 
       </div>
@@ -138,6 +170,10 @@
 
   <!-- lightbox -->
   <script src="assets/js/fancybox.umd.js"></script>
+  <script>
+    // Set a flag to indicate we're using backend processing (prevents static timer)
+    window.USE_BACKEND_PROCESSING = true;
+  </script>
   <script src="assets/js/main.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -161,12 +197,65 @@
         });
       }
 
-      if (form) {
-        form.addEventListener('submit', async function (e) {
-          e.preventDefault();
+      // Loading screen functionality
+      const loadingScreen = document.getElementById('loading-screen');
+      let loadingInterval = null;
+
+      function showLoadingScreen() {
+        if (loadingScreen) {
+          loadingScreen.classList.add('active');
+          startLoadingStates();
+        }
+      }
+
+      function hideLoadingScreen() {
+        if (loadingScreen) {
+          loadingScreen.classList.remove('active');
+          if (loadingInterval) {
+            clearInterval(loadingInterval);
+            loadingInterval = null;
+          }
+        }
+      }
+
+      function startLoadingStates() {
+        const states = document.querySelectorAll('.loading-content-wrap');
+        if (!states.length) return;
+
+        let current = 0;
+        states.forEach(s => s.classList.remove('active', 'fade-out'));
+        states[current].classList.add('active');
+
+        loadingInterval = setInterval(() => {
+          states[current].classList.remove('active');
+          states[current].classList.add('fade-out');
+
+          const next = (current + 1) % states.length;
+
+          setTimeout(() => {
+            states[current].classList.remove('fade-out');
+            states[next].classList.add('active');
+            current = next;
+          }, 600);
+        }, 4000);
+      }
+
+      // Handle form submission for backend processing
+      const handleFormSubmit = async function (e) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent any other handlers from running
 
           const selected = document.querySelector('input[name="Contract"]:checked');
           const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+          // Validate before showing loading screen
+          if (!hasFile && (!selected || selected.id === 'Contract5')) {
+            alert('Please upload a file or choose a sample contract.');
+            return;
+          }
+
+          // Show loading screen after validation passes
+          showLoadingScreen();
 
           // Determine what we're processing and create a file-like object
           let fileToProcess = null;
@@ -198,17 +287,20 @@
               displayName = selected.value;
             } catch (err) {
               console.error('Error preparing sample contract:', err);
+              hideLoadingScreen();
               alert('There was a problem preparing the sample contract. ' + (err && err.message ? err.message : ''));
               return;
             }
           } else {
             // No file uploaded and no sample selected
+            hideLoadingScreen();
             alert('Please upload a .txt file or choose a sample contract.');
             return;
           }
 
           // Validate file type
           if (!fileToProcess.name.toLowerCase().endsWith('.txt')) {
+            hideLoadingScreen();
             alert('Only .txt files are supported at the moment.');
             return;
           }
@@ -255,13 +347,22 @@
               console.error('Error storing processResult:', e);
             }
 
-            // Navigate to report page
+            // Navigate to report page (loading screen will be hidden on navigation)
             window.location.href = '/index2.htm';
           } catch (err) {
             console.error('Error in form submission:', err);
+            hideLoadingScreen();
             alert('There was a problem processing your contract. ' + (err && err.message ? err.message : ''));
           }
-        });
+        };
+
+      // Attach to both form submit and button click to ensure it runs
+      if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+      }
+      const submitButton = document.getElementById('getInsights');
+      if (submitButton) {
+        submitButton.addEventListener('click', handleFormSubmit);
       }
     });
   </script>

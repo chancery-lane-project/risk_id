@@ -94,8 +94,17 @@ umap_model = joblib.load(UMAP_MODEL)
 device = torch.device("cpu")
 
 # --- OpenAI / OpenRouter Setup ---
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "tngtech/deepseek-r1t2-chimera:free")  # Default model
+
+if not OPENROUTER_API_KEY:
+    print("[WARNING] OPENROUTER_API_KEY not found in environment variables. API calls will fail.")
+else:
+    print(f"[INFO] OpenRouter API key found (starts with: {OPENROUTER_API_KEY[:10]}...)")
+    print(f"[INFO] Using OpenRouter model: {OPENROUTER_MODEL}")
+
 client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
+    api_key=OPENROUTER_API_KEY,
     base_url="https://openrouter.ai/api/v1")
 
 @app.post("/process/")
@@ -243,13 +252,38 @@ async def find_clauses(file: UploadFile = File(...)):
         "content": f"Here's the contract:\n\n{query_text_short.strip()}\n\nI will send you some clauses next. For now, just confirm you have read the contract and are ready to receive the clauses. A short summary of the content of the contract would be fine."
     }
     ]
+    
+    # Check API key before making request
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="OpenRouter API key not configured. Please set OPENROUTER_API_KEY environment variable."
+        )
         
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-r1-0528-qwen3-8b:free", 
-        messages= messages,
-        temperature=0,
-        max_tokens=1000
-    )
+    try:
+        response = client.chat.completions.create(
+            model=OPENROUTER_MODEL, 
+            messages= messages,
+            temperature=0,
+            max_tokens=1000
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
+            )
+        elif "404" in error_msg or "No endpoints found" in error_msg:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Model not found on OpenRouter. The model '{OPENROUTER_MODEL}' may not be available. Try setting OPENROUTER_MODEL environment variable to a different model. Error: {error_msg}"
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenRouter API error: {error_msg}"
+            )
 
     assistant_reply_1 = response.choices[0].message.content
     messages.append({"role": "assistant", "content": assistant_reply_1})
@@ -295,11 +329,29 @@ async def find_clauses(file: UploadFile = File(...)):
 
     messages.append({"role": "user", "content": clause_block})
 
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-r1-0528-qwen3-8b:free",  
-        messages= messages,
-        temperature=0,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=OPENROUTER_MODEL,  
+            messages= messages,
+            temperature=0,
+        )
+    except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
+            )
+        elif "404" in error_msg or "No endpoints found" in error_msg:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Model not found on OpenRouter. The model '{OPENROUTER_MODEL}' may not be available. Try setting OPENROUTER_MODEL environment variable to a different model. Error: {error_msg}"
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"OpenRouter API error: {error_msg}"
+            )
 
     response_text = response.choices[0].message.content
     df_response = utils.parse_response(response_text)
@@ -335,11 +387,29 @@ async def find_clauses(file: UploadFile = File(...)):
         })
 
         # re-call the LLM
-        retry = client.chat.completions.create(
-            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
-            messages=messages,
-            temperature=0,
-        )
+        try:
+            retry = client.chat.completions.create(
+                model="qwen/qwen-2.5-7b-instruct:free",
+                messages=messages,
+                temperature=0,
+            )
+        except Exception as e:
+            error_msg = str(e)
+            if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
+                )
+            elif "404" in error_msg or "No endpoints found" in error_msg:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Model not found on OpenRouter. The model 'qwen/qwen-2.5-7b-instruct:free' may not be available. Error: {error_msg}"
+                )
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"OpenRouter API error: {error_msg}"
+                )
         response_text = retry.choices[0].message.content
         df_response = utils.parse_response(response_text)
         

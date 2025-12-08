@@ -12,8 +12,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <!-- lightbox -->
   <link rel="stylesheet" href="assets/css/fancybox.css" />
+  <!-- Fathom - beautiful, simple website analytics -->
+  <script src="https://cdn.usefathom.com/script.js" data-site="NLHUCFHP" defer></script>
+  <!-- / Fathom -->
 
   <script>
+    // Set up event delegation for emissions toggle buttons ONCE when page loads
+    // This works for dynamically created elements
+    // Use setTimeout to ensure this runs after main.js
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function() {
+        const listContainer = document.getElementById('recommendation-list');
+        if (listContainer) {
+          // Use capture phase to ensure our handler runs first
+          listContainer.addEventListener('click', function(e) {
+            const toggle = e.target.closest('.emissions-toggle');
+            if (toggle) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation(); // Prevent other handlers from running
+              
+              const article = toggle.closest('.clause');
+              if (article) {
+                const isOpen = article.classList.toggle('open');
+                toggle.textContent = isOpen ? 'Hide emissions' : 'Show emissions';
+              }
+              return false;
+            }
+          }, true); // Use capture phase
+        }
+      }, 100);
+    });
+    
     // Handler #1: processResult (classification + highlighted link + contract title)
     document.addEventListener('DOMContentLoaded', function () {
       const params = new URLSearchParams(window.location.search);
@@ -33,41 +63,83 @@
         if (raw) {
           const data = JSON.parse(raw);
 
-          // Update score label (basic example)
-          const scoreEls = document.querySelectorAll('.score-overview');
-          scoreEls.forEach(el => el.classList.remove('active'));
-          const map = {
-            'unlikely': 'none',
-            'possible': 'basic',
-            'likely': 'moderate',
-            'very likely': 'strong'
+          // Update score summary with gauge
+          const scoreContainer = document.getElementById('score-summary-container');
+          const scoreTitle = document.getElementById('score-title');
+          const scoreContext = document.getElementById('score-context');
+          const needle = document.getElementById('needle-graphic');
+          
+          const scoreMap = {
+            'unlikely': {
+              class: 'score-none',
+              title: 'Minimal climate-aligned language found',
+              context: 'Only a few scattered references to climate or sustainability, with no real substance or intent.',
+              needleRotation: 275 // 9 o'clock
+            },
+            'possible': {
+              class: 'score-basic',
+              title: 'Basic climate-aligned language found',
+              context: 'General mentions of climate or sustainability, but vague, non-binding, or limited in scope.',
+              needleRotation: 331 // 11 o'clock
+            },
+            'likely': {
+              class: 'score-moderate',
+              title: 'Moderate climate-aligned language found',
+              context: 'Several climate-aligned clauses with clear intent and some measurable targets.',
+              needleRotation: 389 // 1 o'clock
+            },
+            'very likely': {
+              class: 'score-strong',
+              title: 'Strong climate-aligned language found',
+              context: 'Comprehensive climate-aligned clauses with clear targets, reporting requirements, and accountability measures.',
+              needleRotation: 444 // 3 o'clock
+            }
           };
-          const cls = map[(data.classification || '').toLowerCase()] || 'none';
-          const target = document.querySelector('.score-overview.' + cls);
-          if (target) target.classList.add('active');
-
-          // Add link to highlighted output if available
-          const p = document.querySelector('.context');
-          if (p && data.highlighted_output_url) {
-            const a = document.createElement('a');
-            a.href = data.highlighted_output_url;
-            a.setAttribute('data-fancybox', '');
-            a.setAttribute('data-type', 'ajax');
-            a.setAttribute('data-src', data.highlighted_output_url);            
-            a.textContent = 'View analysis';
-            p.appendChild(document.createElement('br'));
-            p.appendChild(document.createTextNode(' '));
-            p.appendChild(a);
-            
-            // Bind fancybox to the newly created element
-            // Use setTimeout to ensure fancybox is fully loaded
-            setTimeout(() => {
-              if (typeof Fancybox !== 'undefined') {
-                Fancybox.bind(a, {
-                  groupAll: false
-                });
-              }
-            }, 100);
+          
+          const classification = (data.classification || '').toLowerCase();
+          const scoreInfo = scoreMap[classification] || scoreMap['unlikely'];
+          
+          // Update score container class
+          if (scoreContainer) {
+            // Remove all score classes
+            scoreContainer.classList.remove('score-none', 'score-basic', 'score-moderate', 'score-strong');
+            // Add the correct class
+            scoreContainer.classList.add(scoreInfo.class);
+          }
+          
+          // Update text content
+          if (scoreTitle) {
+            scoreTitle.textContent = scoreInfo.title;
+          }
+          
+          if (scoreContext) {
+            let contextText = scoreInfo.context;
+            // Add link to highlighted output if available
+            // Match static version format: inline link in the paragraph
+            if (data.highlighted_output_url) {
+              scoreContext.innerHTML = contextText + ' <a data-fancybox data-type="iframe" data-src="' + data.highlighted_output_url + '">View climate language found</a>.';
+              
+              // Bind fancybox to all fancybox links (including the one we just created)
+              setTimeout(() => {
+                if (typeof Fancybox !== 'undefined') {
+                  Fancybox.bind('[data-fancybox]', {
+                    groupAll: false
+                  });
+                }
+              }, 100);
+            } else {
+              scoreContext.textContent = contextText;
+            }
+          }
+          
+          // Update needle position and trigger animation
+          if (needle) {
+            const gauge = needle.closest('.gauge');
+            if (gauge) {
+              // Add loaded class to trigger CSS animation
+              gauge.classList.add('loaded');
+              // The CSS will handle the rotation based on the score class
+            }
           }
         }
       } catch (e) {
@@ -100,9 +172,11 @@
         <section class="summary">
           <div class="govuk-phase-banner">
             <p class="govuk-phase-banner__content">
-              <strong class="govuk-tag govuk-phase-banner__content__tag">Alpha</strong>
+              <strong class="govuk-tag govuk-phase-banner__content__tag">
+                Prototype
+              </strong>
               <span class="govuk-phase-banner__text">
-                Learn how to reduce emissions and build climate resilience in a contract
+                This prototype is for testing only. Do not enter real information.
               </span>
             </p>
           </div>
@@ -129,30 +203,33 @@
           </div>
 
           <div class="row scoring">
-            <div class="col score-summary">
-              <p class="score-overview none">None</p>
-              <p class="score-overview basic">BASIC</p>
-              <p class="score-overview moderate">Moderate</p>
-              <p class="score-overview strong">Strong</p>
+            <div class="row score-summary score-none" id="score-summary-container">
+              <div class="gauge">
+                <svg id="guage-graphic" width="129" height="95" viewBox="0 0 129 95" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.51041 34.2969C2.71817 43.2689 0.000266796 53.5161 0.000266796 64.3984C0.000266796 75.2379 2.69682 85.4473 7.45392 94.394L17.216 88.7579C13.4131 81.4716 11.2615 73.1865 11.2615 64.3984C11.2615 55.5675 13.4334 47.244 17.271 39.932L7.51041 34.2969Z" fill="#BD2327"/>
+                  <path d="M61.8042 0C39.8483 0.690221 20.6826 12.4409 9.69308 29.8661L19.4552 35.5022C28.4857 21.4385 44.0158 11.9455 61.8042 11.2662V0Z" fill="#FF8F1C"/>
+                  <path d="M66.4296 11.2722C84.0573 12.1148 99.4162 21.6139 108.348 35.6122L118.11 29.9761C107.219 12.6165 88.2247 0.857372 66.4296 0V11.2722Z" fill="#FEDB01"/>
+                  <path d="M120.761 33.8496C125.553 42.8217 128.271 53.0688 128.271 63.9512C128.271 74.7907 125.574 85 120.817 93.9467L111.055 88.3106C114.858 81.0243 117.01 72.7392 117.01 63.9512C117.009 55.1203 114.838 46.7968 111 39.4847L120.761 33.8496Z" fill="#8CC340"/>
+                </svg>
+                <svg id="needle-graphic" width="14" height="51" viewBox="0 0 14 51" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="7" cy="44" r="6" stroke="#4E4E4E" stroke-width="2"/>
+                  <circle cx="7" cy="44" r="3" fill="#4E4E4E"/>
+                  <rect x="6" width="2" height="38" fill="#4E4E4E"/>
+                </svg>
+              </div>
 
-              <p class="context">
-                <strong>Climate-aligned language detected</strong><br/>
-                Some climate-aligned clauses included and mentions of carbon footprint.
-              </p>
-            </div>
-
-            <div class="col quant-summary">
-              <p><strong id="clause-count">0</strong> Recommended clauses</p>
-            </div>
-            <div class="col quant-summary">
-              <!-- Add stable id so JS can update reliably (replaces brittle text==='2' check) -->
-              <p><strong id="emissions-count">2</strong> Possible emissions addressed</p>
+              <div class="score-explain">
+                <p class="strong" id="score-title">Minimal climate-aligned language found</p>
+                <p class="context" id="score-context">Only a few scattered references to climate or sustainability, with no real substance or intent.</p>
+                <div class="row btn-row">
+                  <a href="#reccomendations" class="btn sml">View recommendations</a>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-
-        <section class="row">
-          <h2>Recommended clauses to review</h2>
+        <section id="reccomendations" class="row">
+          <h2><strong id="clause-count">0</strong> recommended clauses, addressing <strong id="emissions-count">0</strong> emissions</h2>
           <div class="row clause-stack" id="recommendation-list">
             <!-- Clauses will be dynamically inserted here by JS below -->
             <noscript>
@@ -208,7 +285,7 @@
   <script>
     // Handler #2: recommendResult (recommended clauses list + counts)
     document.addEventListener('DOMContentLoaded', function() {
-
+      
       // Load recommendations from sessionStorage
       try {
         const raw = sessionStorage.getItem('recommendResult');
@@ -270,6 +347,32 @@
             data.matches.forEach((m) => {
               const article = document.createElement('article');
               article.className = 'clause';
+              
+              // Build emissions table HTML
+              let emissionsTableHTML = '';
+              if (m.emissions_sources && m.emissions_sources.length > 0) {
+                emissionsTableHTML = `
+                  <div class="emissions-table-container">
+                    <table class="emissions-table">
+                      <thead>
+                        <tr>
+                          <th>Emission source</th>
+                          <th>How it's addressed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${m.emissions_sources.map(emission => `
+                          <tr>
+                            <td>${emission.emission_label || 'N/A'}</td>
+                            <td>${emission.justification || emission.how_addressed || 'N/A'}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `;
+              }
+              
               article.innerHTML = `
                 <div class="row clause-inner">
                   ${m.child_name ? `<p class="child-name">${m.child_name}</p>` : ''}
@@ -277,29 +380,13 @@
                   <p class="clause-excerpt"><strong>Why this clause:</strong> ${m.reason || 'No reason available'}</p>
                 </div>
                 <div class="row clause-toggle">
-                  <h4>Show emissions and how they're addressed</h4>
+                  <a href="#" class="emissions-toggle btn sml">Show emissions</a>
+                  <div class="right-btns">
+                    <a class="btn sml secondary icon-right" href="${m.clause_url || '#'}" target="_blank">View clause</a>
+                    <a class="btn sml secondary icon-download" href="${m.download_url || m.clause_url || '#'}" target="_blank">Download clause</a>
+                  </div>
                   <div class="row clause-toggle-inner">
-                    ${m.emissions_sources && m.emissions_sources.length > 0 ? `
-                      <div class="emissions-table-container">
-                        <table class="emissions-table">
-                          <thead>
-                            <tr>
-                              <th>Emission Source</th>
-                              <th>Justification</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            ${m.emissions_sources.map(emission => `
-                              <tr>
-                                <td>${emission.emission_label || 'N/A'}</td>
-                                <td>${emission.justification || 'N/A'}</td>
-                              </tr>
-                            `).join('')}
-                          </tbody>
-                        </table>
-                      </div>
-                    ` : '<p><strong>Climate emissions sources addressed:</strong> No specific emissions sources identified</p>'}
-                    <div class="row"><a href="${m.clause_url || '#'}" class="btn sml" target="_blank">View clause full text</a></div>
+                    ${emissionsTableHTML}
                   </div>
                 </div>
               `;

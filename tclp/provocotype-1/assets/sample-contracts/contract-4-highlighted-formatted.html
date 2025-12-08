@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Software-as-a-Service Agreement between CloudFusion Ltd and BrightWave Consulting Ltd with sustainability provisions">
+    <meta name="keywords" content="SaaS, software agreement, cloud services, project management, sustainability">
+    <title>SaaS Agreement - CloudFusion Project Management Platform</title>
+    <style>
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 3px solid #6c5ce7;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #6c5ce7;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .contract-date {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .subscription-info {
+            background-color: #f8f9ff;
+            border: 2px solid #6c5ce7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        nav {
+            background-color: #f8f9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        nav h2 {
+            margin-top: 0;
+            color: #6c5ce7;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            columns: 2;
+            column-gap: 30px;
+        }
+
+        nav li {
+            margin-bottom: 5px;
+            break-inside: avoid;
+        }
+
+        nav a {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 4px solid #6c5ce7;
+            background-color: #fafafa;
+        }
+
+        h2 {
+            color: #6c5ce7;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #2c3e50;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        h4 {
+            color: #2c3e50;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 8px;
+        }
+
+        .subsection {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .subsection-number {
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .definition-list {
+            background-color: #ffffff;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .definition-term {
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+
+        .party-info {
+            background-color: #f8f9ff;
+            border: 1px solid #6c5ce7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .sustainability-section {
+            background-color: #e8f5e8;
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .sustainability-section h3 {
+            color: #27ae60;
+            margin-top: 0;
+        }
+
+        .tech-feature {
+            background-color: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .sla-section {
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .schedule {
+            background-color: #f0f8ff;
+            border: 2px solid #6c5ce7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #ffffff;
+        }
+
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .pricing-table {
+            background-color: #f8f9ff;
+        }
+
+        .pricing-table th {
+            background-color: #2c3e50;
+        }
+
+        .support-table th {
+            background-color: #e67e22;
+        }
+
+        .data-protection {
+            background-color: #fdf2e9;
+            border: 2px solid #e67e22;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Preserve original highlighting - exact yellow background */
+        span.highlighted {
+            background-color: #ffe657 !important;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        span.highlighted.active {
+              outline: 3px dashed #000000;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            nav ul {
+                columns: 1;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            section {
+                padding: 15px;
+            }
+        }
+        .jumpBtn-wrap {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          z-index: 999;
+          width: calc(100% - 30px);
+          padding: 15px;
+          text-align: center;
+          backdrop-filter: blur(5px);
+          border-top: 1px solid #cccccc3b;
+          box-shadow: 0px 0px 20px #0000000f;
+        }
+        #jumpBtn {
+          padding: 10px 15px;
+          border-radius: 35px;
+          cursor: pointer;
+          background: #FFBD23;
+          border: none;
+          color: #1F2B55;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        #jumpBtn:hover {
+          background: #e6b33b;
+        }
+    </style>
+</head>
+<body>
+  <div class="jumpBtn-wrap">
+    <button id="jumpBtn">Skip to next instance</button>
+  </div>
+    <header>
+        <h1>Software-as-a-Service (SaaS) Agreement</h1>
+        <p class="contract-date">Date: 15 September 2025</p>
+        <div class="subscription-info">CloudFusion Project Management Platform</div>
+    </header>
+
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#parties">1. Parties</a></li>
+            <li><a href="#background">2. Background</a></li>
+            <li><a href="#definitions">3. Definitions and Interpretation</a></li>
+            <li><a href="#grant-rights">4. Grant of Rights and Acceptable Use</a></li>
+            <li><a href="#services">5. Services and Service Levels</a></li>
+            <li><a href="#security">6. Security</a></li>
+            <li><a href="#data-protection">7. Data Protection</a></li>
+            <li><a href="#customer-obligations">8. Customer Obligations</a></li>
+            <li><a href="#support">9. Support Services</a></li>
+            <li><a href="#fees">10. Fees and Payment</a></li>
+            <li><a href="#suspension">11. Suspension</a></li>
+            <li><a href="#ip">12. Intellectual Property</a></li>
+            <li><a href="#warranties">13. Warranties and Disclaimers</a></li>
+            <li><a href="#indemnities">14. Indemnities</a></li>
+            <li><a href="#liability">15. Liability</a></li>
+            <li><a href="#term">16. Term and Termination</a></li>
+            <li><a href="#exit">17. Exit and Data Return</a></li>
+            <li><a href="#audit">18. Audit and Compliance</a></li>
+            <li><a href="#force-majeure">19. Force Majeure</a></li>
+            <li><a href="#sustainability">20. Sustainability</a></li>
+            <li><a href="#general">21. General</a></li>
+            <li><a href="#schedule1">Schedule 1 — Service Description</a></li>
+            <li><a href="#schedule2">Schedule 2 — Payment Terms</a></li>
+            <li><a href="#schedule3">Schedule 3 — Data Protection</a></li>
+            <li><a href="#schedule4">Schedule 4 — Support & SLA</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="parties">
+            <h2>1. Parties</h2>
+            <div class="party-info">
+                <p><strong>Provider:</strong> CloudFusion Ltd (No. 07223344), 22 Tech Street, London, EC1A 1DD, United Kingdom ("Provider").</p>
+            </div>
+            <div class="party-info">
+                <p><strong>Customer:</strong> BrightWave Consulting Ltd (No. 06598710), 5 Innovation Way, Bristol, BS1 4TR, United Kingdom ("Customer").</p>
+            </div>
+        </section>
+
+        <section id="background">
+            <h2>2. Background</h2>
+            <ol>
+                <li>The Provider operates a cloud-based project management platform and related services.</li>
+                <li>The Customer wishes to subscribe to the Services for internal business use on the terms of this Agreement.</li>
+                <li><span class="highlighted">The Parties acknowledge the importance of reducing the environmental and climate impacts associated with digital services, and intend to collaborate in good faith to align the Services with recognised sustainability standards and the UK's net zero commitments.</span></li>
+            </ol>
+        </section>
+
+        <section id="definitions">
+            <h2>3. Definitions and Interpretation</h2>
+            <h3>3.1 Definitions</h3>
+            <div class="definition-list">
+                <ul>
+                    <li><span class="definition-term">Authorised Users</span> means employees and contractors authorised by the Customer to use the Services.</li>
+                    <li><span class="definition-term">Data Protection Legislation</span> means UK GDPR and the Data Protection Act 2018.</li>
+                    <li><span class="definition-term">Personal Data</span> has the meaning given in Data Protection Legislation.</li>
+                    <li><span class="definition-term">SLA</span> means the service levels in Schedule 4.</li>
+                    <li><span class="definition-term">Services</span> means the hosted software and support described in Schedule 1.</li>
+                    <li><span class="definition-term">Subscription Fees</span> means the fees set out in Schedule 2.</li>
+                    <li><span class="definition-term">Term</span> means the Initial Term and any Renewal Terms per clause 16.</li>
+                </ul>
+            </div>
+
+            <h3>3.2 Interpretation</h3>
+            <ul>
+                <li>Headings do not affect interpretation; "including" means "including without limitation".</li>
+            </ul>
+        </section>
+
+        <section id="grant-rights">
+            <h2>4. Grant of Rights and Acceptable Use</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">4.1</span> Subject to payment of Subscription Fees, the Provider grants the Customer a non-exclusive, non-transferable right to permit Authorised Users to access and use the Services for internal business purposes.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">4.2</span> The Customer shall ensure that Authorised Users comply with the Acceptable Use Policy (AUP) in Schedule 1; no unlawful, infringing or harmful content may be uploaded; no attempts to bypass security or perform penetration testing without permission.</p>
+            </div>
+        </section>
+
+        <section id="services">
+            <h2>5. Services and Service Levels</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">5.1</span> The Provider shall provide the Services in accordance with the SLA, with a target uptime of 99.5% per calendar month (excluding Scheduled Maintenance).</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">5.2</span> Scheduled Maintenance windows will be notified at least 48 hours in advance and occur outside UK business hours where reasonably practicable.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">5.3</span> Emergency maintenance may be undertaken to address critical issues; the Provider will use reasonable efforts to notify the Customer promptly.</p>
+            </div>
+        </section>
+
+        <section id="security">
+            <h2>6. Security</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">6.1</span> The Provider shall implement administrative, physical and technical safeguards appropriate to the risk (including access controls, encryption at rest and in transit where appropriate, vulnerability management, logging and monitoring).</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">6.2</span> The Provider shall maintain an information security program aligned to ISO/IEC 27001 (or equivalent) and shall annually test incident response and disaster recovery plans.</p>
+            </div>
+        </section>
+
+        <section id="data-protection">
+            <h2>7. Data Protection</h2>
+            <p>The Data Protection Addendum at Schedule 3 applies to any processing of Personal Data by the Provider on behalf of the Customer.</p>
+        </section>
+
+        <section id="customer-obligations">
+            <h2>8. Customer Obligations</h2>
+            <ol>
+                <li>Ensure that only Authorised Users use the Services and keep credentials secure.</li>
+                <li>Be responsible for the accuracy, quality, legality and integrity of Customer Data.</li>
+                <li>Not access or use the Services to build a competing product or service.</li>
+            </ol>
+        </section>
+
+        <section id="support">
+            <h2>9. Support Services</h2>
+            <p>The Provider shall provide Support Services in accordance with Schedule 4, including response targets by severity.</p>
+        </section>
+
+        <section id="fees">
+            <h2>10. Fees and Payment</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">10.1</span> Subscription Fees are as set out in Schedule 2 and are payable monthly in advance. Invoices are due within thirty (30) days of the invoice date.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">10.2</span> Late payments accrue interest at four percent (4%) per annum above the Bank of England base rate.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">10.3</span> Fees exclude VAT, which shall be payable in addition where applicable.</p>
+            </div>
+        </section>
+
+        <section id="suspension">
+            <h2>11. Suspension</h2>
+            <p>The Provider may suspend access to the Services immediately upon notice if the Customer is in material breach (including overdue fees beyond 30 days) or where suspension is necessary to address a security or legal risk. The Provider will reinstate access promptly upon remedy.</p>
+        </section>
+
+        <section id="ip">
+            <h2>12. Intellectual Property</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">12.1</span> All IPR in the Services and underlying software are owned by the Provider or its licensors.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">12.2</span> The Customer owns all IPR in Customer Data. The Customer grants the Provider a non-exclusive licence to process Customer Data solely for the purpose of providing the Services.</p>
+            </div>
+        </section>
+
+        <section id="warranties">
+            <h2>13. Warranties and Disclaimers</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">13.1</span> The Provider warrants that the Services will materially conform to the documentation in Schedule 1 and will be provided with reasonable skill and care.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">13.2</span> Except as expressly stated, the Services are provided "as is" and all implied warranties are excluded to the maximum extent permitted by law.</p>
+            </div>
+        </section>
+
+        <section id="indemnities">
+            <h2>14. Indemnities</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">14.1</span> The Provider shall indemnify the Customer against third-party claims alleging that the Customer's authorised use of the Services infringes IPR, provided the Customer promptly notifies the Provider and allows the Provider sole control of the defence.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">14.2</span> The Customer shall indemnify the Provider against claims arising from Customer Data or use of the Services in breach of this Agreement or Applicable Law.</p>
+            </div>
+        </section>
+
+        <section id="liability">
+            <h2>15. Liability</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">15.1</span> Neither Party excludes liability for death or personal injury caused by negligence, fraud, or any liability which cannot be excluded by law.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">15.2</span> Subject to clause 15.1, each Party's aggregate liability in any twelve (12) month period shall not exceed the total Subscription Fees paid or payable by the Customer in that period.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">15.3</span> Neither Party shall be liable for indirect or consequential loss, including loss of profit, revenue, goodwill or data.</p>
+            </div>
+        </section>
+
+        <section id="term">
+            <h2>16. Term and Termination</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">16.1</span> Initial Term: two (2) years from the Commencement Date. Thereafter, automatic one (1) year renewals unless either Party gives not less than thirty (30) days' notice prior to expiry.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">16.2</span> Either Party may terminate for material breach not remedied within thirty (30) days of notice, or upon insolvency of the other Party.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">16.3</span> On termination, access ceases. Exit assistance and data return are addressed in clause 17 and Schedule 3.</p>
+            </div>
+        </section>
+
+        <section id="exit">
+            <h2>17. Exit and Data Return</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">17.1</span> During the thirty (30) days following termination or expiry, the Customer may export Customer Data via available tools or request a one-off export in a mutually agreed format.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">17.2</span> Upon Customer request, the Provider shall delete or return Customer Data and certify deletion, subject to legal retention obligations.</p>
+            </div>
+        </section>
+
+        <section id="audit">
+            <h2>18. Audit and Compliance</h2>
+            <p>On reasonable notice and during business hours, the Customer may review relevant policies and third-party certifications. Any on-site audits shall be subject to reasonable security and confidentiality controls. <span class="highlighted">The scope of such reviews may include, where relevant, environmental and sustainability certifications or reports relating to the provision of the Services.</span></p>
+        </section>
+
+        <section id="force-majeure">
+            <h2>19. Force Majeure</h2>
+            <p>Neither Party is liable for delay or failure to perform due to events beyond its reasonable control, provided it notifies the other Party and mitigates. If a Force Majeure event continues for more than sixty (60) days, either Party may terminate on ten (10) Business Days' notice.</p>
+        </section>
+
+        <section id="sustainability">
+            <h2>20. Sustainability</h2>
+            <div class="sustainability-section">
+                <h3>Environmental Commitment</h3>
+                <p><span class="highlighted">Each Party shall, to the extent reasonable and proportionate, seek to reduce the greenhouse gas emissions associated with their activities under this Agreement, including through measures such as renewable energy procurement, efficient coding and infrastructure management, and reduced business travel.</span></p>
+            </div>
+        </section>
+
+        <section id="general">
+            <h2>21. General</h2>
+            <div class="subsection">
+                <p><span class="subsection-number">21.1</span> <strong>Confidentiality.</strong> Each Party shall keep the other's Confidential Information confidential.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">21.2</span> <strong>Assignment.</strong> The Customer may not assign without Provider consent; the Provider may assign as part of a corporate reorganisation or sale of business.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">21.3</span> <strong>Notices.</strong> As set out in Schedule 1, Section 6.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">21.4</span> <strong>Entire Agreement.</strong> This Agreement and Schedules constitute the entire agreement.</p>
+            </div>
+            <div class="subsection">
+                <p><span class="subsection-number">21.5</span> <strong>Governing Law.</strong> England and Wales; courts of England have exclusive jurisdiction.</p>
+            </div>
+        </section>
+
+        <section id="schedule1" class="schedule">
+            <h2>Schedule 1 — Service Description and AUP</h2>
+
+            <h3>1. Features</h3>
+            <div class="tech-feature">
+                <ul>
+                    <li>Project and task management, Kanban boards, timelines, Gantt views</li>
+                    <li>Document storage, versioning, and search</li>
+                    <li>Reporting dashboards and export (CSV/JSON); role-based access controls; SSO (SAML/OIDC) optional</li>
+                    <li>Public API for integrations; webhooks; audit logs</li>
+                </ul>
+            </div>
+
+            <h3>2. Hosting and Security</h3>
+            <p>Hosted in UK/EU data centres with redundancy; daily encrypted backups with 30-day retention; DR objectives: RPO 24h, RTO 8h.</p>
+
+            <h3>3. Acceptable Use Policy (AUP)</h3>
+            <ul>
+                <li>No unlawful, harmful, defamatory, infringing or offensive content</li>
+                <li>No reverse engineering or circumventing security controls</li>
+                <li>No sending malware or spam; reasonable use limits apply to API calls and storage</li>
+            </ul>
+
+            <h3>4. Notices</h3>
+            <div class="party-info">
+                <p><strong>Provider:</strong> Legal, CloudFusion Ltd, 22 Tech Street, London EC1A 1DD; legal@cloudfusion.example</p>
+            </div>
+            <div class="party-info">
+                <p><strong>Customer:</strong> Operations Director, BrightWave Consulting Ltd, 5 Innovation Way, Bristol BS1 4TR; ops@brightwave.example</p>
+            </div>
+        </section>
+
+        <section id="schedule2" class="schedule">
+            <h2>Schedule 2 — Payment Terms</h2>
+
+            <h3>1. Subscription Fees</h3>
+            <table class="pricing-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Price</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Base subscription</td>
+                        <td>£2,000 per month</td>
+                        <td>Up to 100 users</td>
+                    </tr>
+                    <tr>
+                        <td>Additional users</td>
+                        <td>£12 per user/month</td>
+                        <td>Beyond 100 users</td>
+                    </tr>
+                    <tr>
+                        <td>SSO (optional)</td>
+                        <td>£300/month</td>
+                        <td>SAML/OIDC integration</td>
+                    </tr>
+                    <tr>
+                        <td>Premium Support (optional)</td>
+                        <td>£500/month</td>
+                        <td>24×7 incident response</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>2. Billing</h3>
+            <p>Monthly in advance; electronic invoicing; PO numbers to be provided by the Customer where applicable.</p>
+
+            <h3>3. Indexation</h3>
+            <p>Annual increase capped at 5% or CPI (whichever is lower) on anniversary of Commencement Date.</p>
+        </section>
+
+        <section id="schedule3" class="schedule">
+            <h2>Schedule 3 — Data Protection Addendum (DPA)</h2>
+
+            <div class="data-protection">
+                <h3>1. Roles</h3>
+                <p>Customer: Controller; Provider: Processor.</p>
+
+                <h3>2. Subject Matter and Duration</h3>
+                <p>Processing of Customer personnel data for the provision of the Services during the Term and any exit period.</p>
+
+                <h3>3. Nature and Purpose</h3>
+                <p>User account management, authentication, audit logging, collaboration and support.</p>
+
+                <h3>4. Categories of Data</h3>
+                <ul>
+                    <li><strong>Personal Data:</strong> name, email, role, activity logs, IP addresses, file metadata</li>
+                    <li><strong>Data Subjects:</strong> Customer employees/contractors; optionally Customer clients if invited as users</li>
+                </ul>
+            </div>
+
+            <h3>5. Processor Obligations</h3>
+            <ol>
+                <li>Process only on documented instructions; maintain confidentiality; implement appropriate security.</li>
+                <li>Sub-processors require Customer consent; Provider maintains an online list and will notify changes.</li>
+                <li>No international transfers outside UK/EEA without adequate safeguards (e.g., UK IDTA/EU SCCs).</li>
+                <li>Notify Personal Data Breach without undue delay (within 48 hours where feasible) and cooperate on remediation.</li>
+                <li>Assist with data subject requests and DPIAs.</li>
+                <li>Delete or return Personal Data on termination at Customer's option (subject to legal retention).</li>
+                <li>Allow reasonable audits of compliance (subject to confidentiality and security).</li>
+            </ol>
+        </section>
+
+        <section id="schedule4" class="schedule">
+            <h2>Schedule 4 — Support Services and SLA</h2>
+
+            <div class="sla-section">
+                <h3>1. Support Hours</h3>
+                <p>09:00–17:00 UK time, Monday–Friday (excluding UK public holidays). Premium Support adds 24×7 incident response for Severity 1.</p>
+
+                <h3>2. Severity and Response Targets</h3>
+                <table class="support-table">
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Definition</th>
+                            <th>Target Response</th>
+                            <th>Target Workaround/Resolution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sev 1</td>
+                            <td>Service unavailable or critical functionality down</td>
+                            <td>4 business hours</td>
+                            <td>Workaround 8h; resolution ASAP</td>
+                        </tr>
+                        <tr>
+                            <td>Sev 2</td>
+                            <td>Major degradation, no practical workaround</td>
+                            <td>1 business day</td>
+                            <td>Workaround 2 days; resolution in next release if needed</td>
+                        </tr>
+                        <tr>
+                            <td>Sev 3</td>
+                            <td>Minor issue or cosmetic defect</td>
+                            <td>3 business days</td>
+                            <td>Planned into backlog</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>3. Availability</h3>
+                <p>Monthly uptime target: 99.5% (excluding Scheduled Maintenance). Service credits (on request within 30 days): 5% of monthly fee for each full 1% below target, capped at 20% of monthly fee.</p>
+            </div>
+        </section>
+    </main>
+    <script>
+      const highlights = document.querySelectorAll('.highlighted');
+      let currentIndex = -1;
+
+      function scrollToNext() {
+        if (highlights.length === 0) return;
+
+        // move to next index (wrap around)
+        currentIndex = (currentIndex + 1) % highlights.length;
+
+        // remove "active" class from all
+        highlights.forEach(el => el.classList.remove('active'));
+
+        // add "active" class to the current one
+        highlights[currentIndex].classList.add('active');
+
+        // scroll to it
+        highlights[currentIndex].scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+
+      // Scroll to the first highlight when page loads
+      window.addEventListener('DOMContentLoaded', () => {
+        scrollToNext();
+      });
+
+      // Scroll to next on button click
+      document.getElementById('jumpBtn').addEventListener('click', scrollToNext);
+    </script>
+</body>
+</html>
