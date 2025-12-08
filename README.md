@@ -15,7 +15,7 @@ Legal teams face the challenge of spotting climate-related risks hidden in lengt
 - Suggest relevant climate-aligned clauses from TCLP's library.  
 - Provide outputs that can be used for prototyping clause-discovery tools.  
 
-👉 The outputs from this model are currently being tested in a **provocatype prototype** (see [Static Frontend / Provocatype](#static-frontend--provocatype) section below). This allows us to test with users whether AI-driven clause suggestions increase confidence and adoption compared to manual searching.  
+👉 The outputs from this model are currently being tested in a **live prototype** (see [Frontend / Provocatype](#frontend--provocatype) section below). This allows us to test with users whether AI-driven clause suggestions increase confidence and adoption compared to manual searching. The prototype now features **live contract analysis** that processes contracts in real-time.  
 
 ---
 
@@ -32,22 +32,30 @@ risk_id-main/
   .gitignore                 # Git ignore rules
   .DS_Store                  # macOS system file (ignore)
 
-  # Static Frontend / Provocatype
-  index.html                 # Entry point for the static prototype
-  contract-report-*.htm      # Example contract analysis reports
-  assets/                    # CSS, JavaScript, and images for the static frontend
-
   tclp/
     app.py                   # Main application logic (FastAPI)
     utils.py                 # Utility functions
+    complexity.py            # Complexity analysis utilities
     __init__.py              # Package init
     risk_taxonomy.html       # Risk taxonomy reference (HTML)
 
     models/
       clustering_model.pkl   # Pre-trained clustering model
       umap_model.pkl         # Pre-trained UMAP model
-      CC_BERT/               # Placeholder for Climate Contract BERT models
+      CC_BERT/               # Climate Contract BERT models
       wandb/                 # Experiment tracking logs and outputs (Weights & Biases)
+
+    provocotype-1/           # Live frontend prototype
+      index.htm              # Entry point for contract upload
+      index2.htm             # Results page with analysis
+      assets/                # CSS, JavaScript, images, and sample contracts
+        css/                 # Stylesheets
+        js/                  # JavaScript files
+        img/                 # Images and loading animations
+        sample-contracts/   # Example contract files
+
+    output/                  # Generated highlighted contract outputs (gitignored)
+    data/                    # Data files (gitignored)
 ```
 
 ---
@@ -61,8 +69,8 @@ risk_id-main/
   - `risk_taxonomy.html`: An overview of the taxonomy of risks that the model is trained to identify.  
 - **Experiment Tracking**  
   - `wandb/`: Logs and metadata for training and evaluation runs (using [Weights & Biases](https://wandb.ai/)).  
-- **Static Frontend / Provocatype**  
-  - Static HTML prototype for testing the clause discovery concept with users (see section below).  
+- **Live Frontend / Provocatype**  
+  - Dynamic HTML prototype with live contract analysis for testing the clause discovery concept with users (see section below).  
 
 ---
 
@@ -88,9 +96,9 @@ Ensure you are using the Python version specified in `.python-version`.
 
 ## Usage
 
-### Running the FastAPI Backend
+### Running the Application
 
-To run the FastAPI application:
+1. **Start the FastAPI Backend:**
 
 ```bash
 poetry run uvicorn tclp.app:app --host 0.0.0.0 --port 8000
@@ -100,16 +108,30 @@ This will:
 - Load the pre-trained models.  
 - Start a FastAPI server that can process contract text.  
 - Provide API endpoints for contract analysis and clause recommendations.  
+- Serve the frontend files from `tclp/provocotype-1/`.
 
-### Using the Static Frontend
+2. **Access the Frontend:**
 
-The static frontend can be used independently for user testing. Simply open `index.html` in a web browser. See the [Static Frontend / Provocatype](#static-frontend--provocatype) section for more details.
+Once the server is running, open your web browser and navigate to:
+```
+http://localhost:8000/tclp/provocotype-1/index.htm
+```
+
+The frontend will:
+- Allow you to upload a `.txt` contract file
+- Process the contract in real-time using the backend API
+- Display analysis results including climate risk classification, recommended clauses, and emissions impact
+- Show highlighted contract text with climate-aligned language identified
+
+**Note:** You'll need to set up environment variables for the OpenRouter API:
+- `OPENROUTER_API_KEY`: Your OpenRouter API key
+- `OPENROUTER_MODEL`: The model to use (defaults to `tngtech/deepseek-r1t2-chimera:free`)
 
 ---
 
-## Static Frontend / Provocatype
+## Frontend / Provocatype
 
-This repository includes a **static frontend prototype** that explores a design hypothesis for helping lawyers and contract drafters identify the most relevant and impactful climate-aligned clauses.
+This repository includes a **live frontend prototype** that explores a design hypothesis for helping lawyers and contract drafters identify the most relevant and impactful climate-aligned clauses.
 
 ### Hypothesis
 
@@ -119,40 +141,59 @@ This provocatype tests whether **automated analysis and ranking** can shift beha
 
 ### How It Works
 
-- This prototype is a **simulation of an AI model** that analyses contracts and recommends relevant clauses.  
-- The underlying model and approach are documented in this repository (the `risk_id` backend).  
-- The text outputs in these static HTML pages are **real results** generated by that model.  
-- **index.html** acts as the entry point for the simulation.  
-- **contract-report-[n].htm** represent different example outputs from the model:  
-  - Each shows suggested TCLP clauses linked to the analysed contract text.  
-  - Clauses are ranked by their **potential emissions reduction impact**.  
-  - The reasoning is displayed to build user trust and confidence in the suggestions.  
+- The prototype features **live contract analysis** that processes uploaded contracts in real-time.  
+- Users upload a `.txt` contract file through the web interface.  
+- The backend processes the contract using machine learning models to:  
+  - Classify the contract's climate-aligned language (unlikely, possible, likely, very likely)  
+  - Identify specific climate-aligned clauses in the contract text  
+  - Recommend relevant TCLP clauses from the library  
+  - Rank clauses by potential emissions reduction impact  
+  - Generate highlighted contract text showing where climate language appears  
+- Results are displayed with:  
+  - A visual gauge showing the climate alignment score  
+  - Recommended clauses with explanations  
+  - Emissions sources addressed by each clause  
+  - Interactive "Show emissions" toggles for detailed information  
+  - Links to view and download full clause text  
 
 ### Purpose
 
 This is a **provocatype**:  
-- Not a finished product, but a stimulus for testing assumptions.  
+- Not a finished product, but a working prototype for testing assumptions.  
 - Used in user research sessions to provoke reactions, gather feedback, and validate or invalidate the hypothesis.  
 - Helps us learn whether users prefer guided, ranked clause suggestions over manual search.  
+- Demonstrates live AI-driven contract analysis capabilities.  
+
+### Current Features
+
+- **Live Analysis**: Real-time processing of uploaded contract files  
+- **Climate Risk Classification**: Automatic scoring of climate-aligned language  
+- **Clause Recommendations**: AI-powered suggestions from TCLP's clause library  
+- **Emissions Impact Ranking**: Clauses ranked by potential emissions reduction  
+- **Highlighted Output**: Visual highlighting of climate-aligned language in contracts  
+- **Interactive UI**: Modern interface with loading states and smooth transitions  
 
 ### Limitations
 
 It's important to note the following constraints of this prototype:
 
-- **Static only**: This is a static prototype. No live analysis or contract processing takes place.  
-- **Concept testing**: It is designed purely to test the *concept* — i.e. does the idea make sense and provide value to users — not to demonstrate working technology.  
-- **Single environment**: It has only been tested in one environment: **Chrome desktop**. Behaviour may differ elsewhere.  
-- **Quick and messy code**: The code has been hacked together quickly and should be considered throwaway. It is not production-quality.  
+- **File Format**: Currently only supports `.txt` files  
+- **Concept testing**: While functional, it is designed to test the *concept* and gather user feedback  
+- **Single environment**: Primarily tested in **Chrome desktop**. Behaviour may differ elsewhere.  
+- **Development prototype**: The code is optimized for rapid iteration and user testing, not production deployment.  
 
 ### For Testers
 
-1. Open **index.html** in your web browser (double-click should work on most systems).  
-2. Explore the interface and follow the prompts.  
-3. View the different **contract report** pages (`contract-report-1.htm` to `contract-report-4.htm`). Each shows:  
-   - Suggested climate-aligned clauses.  
-   - A ranking of clauses by potential emissions reduction.  
-   - Explanations of why each clause is relevant.  
-4. Share your feedback on:  
+1. Start the backend server (see [Usage](#usage) section above).  
+2. Open the frontend at `http://localhost:8000/tclp/provocotype-1/index.htm`.  
+3. Upload a `.txt` contract file or use one of the sample contracts.  
+4. Wait for the analysis to complete (you'll see a loading screen).  
+5. Review the results page which shows:  
+   - Climate alignment score with visual gauge  
+   - Recommended climate-aligned clauses  
+   - Emissions sources addressed by each clause  
+   - Highlighted contract text showing climate language  
+6. Share your feedback on:  
    - Whether the suggestions feel relevant and useful.  
    - How confident you feel in the recommendations compared to manual searching.  
    - What would make the tool more practical for your work.  
