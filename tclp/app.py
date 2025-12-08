@@ -11,6 +11,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import joblib
 import pandas as pd
 import torch
+import utils
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,8 +20,6 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from starlette.status import HTTP_401_UNAUTHORIZED
-
-import utils
 
 load_dotenv()
 
@@ -61,16 +60,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 temp_dir = os.path.join(BASE_DIR, "temp_uploads")
 # Make output persist outside temp_dir so cleanup doesn't remove files we link to
 output_dir = os.path.join(BASE_DIR, "output")
-MODEL_PATH = "models/CC_BERT/CC_model_detect"
-CLAUSE_FOLDER = "data/cleaned_content"
-CLAUSE_HTML = "data/clause_boxes"
-CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
-EMISSION_INDICATORS = "data/full_emissions_table_2.csv"
-EMISSION_TAXONOMY = 'data/emissions_topics.csv'
+MODEL_PATH = os.path.join(BASE_DIR, "models", "CC_BERT", "CC_model_detect")
+CLAUSE_FOLDER = os.path.join(BASE_DIR, "data", "cleaned_content")
+CLAUSE_HTML = os.path.join(BASE_DIR, "data", "clause_boxes")
+CLAUSE_TAGS = os.path.join(BASE_DIR, "data", "clause_tags_with_clusters.xlsx")
+EMISSION_INDICATORS = os.path.join(BASE_DIR, "data", "full_emissions_table_2.csv")
+EMISSION_TAXONOMY = os.path.join(BASE_DIR, 'data', 'emissions_topics.csv')
 INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
 ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
-CLUSTERING_MODEL = 'models/clustering_model.pkl'
-UMAP_MODEL = 'models/umap_model.pkl'
+CLUSTERING_MODEL = os.path.join(BASE_DIR, 'models', 'clustering_model.pkl')
+UMAP_MODEL = os.path.join(BASE_DIR, 'models', 'umap_model.pkl')
 
 app.mount(
     "/assets",

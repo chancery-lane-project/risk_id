@@ -144,6 +144,9 @@ rapidfuzz = "^3.13.0"
 python-dotenv = "^1.1.0"
 bertopic = "^0.17.3"
 rich = "^14.1.0"
+polars = "^1.33.0"
+pypdf2 = "^3.0.1"
+kagglehub = "^0.3.13"
 
 
 [tool.poetry.group.dev.dependencies]

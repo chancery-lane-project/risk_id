@@ -2482,6 +2482,30 @@ files = [
 ]
 
 [[package]]
+name = "kagglehub"
+version = "0.3.13"
+description = "Access Kaggle resources anywhere"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "kagglehub-0.3.13-py3-none-any.whl", hash = "sha256:e00dec8b81396cbad9c7b5eb62a33cf8ae27da26227abd196ed8f054c845ca00"},
+    {file = "kagglehub-0.3.13.tar.gz", hash = "sha256:d3c8b6250627d665096cd91a9487559bf5ed61be607eaf63d14511b20eea646e"},
+]
+
+[package.dependencies]
+packaging = "*"
+pyyaml = "*"
+requests = "*"
+tqdm = "*"
+
+[package.extras]
+hf-datasets = ["datasets", "pandas"]
+pandas-datasets = ["pandas"]
+polars-datasets = ["polars"]
+signing = ["betterproto (>=2.0.0b6)", "model-signing", "sigstore (>=3.6.1)"]
+
+[[package]]
 name = "kiwisolver"
 version = "1.4.7"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -4008,6 +4032,50 @@ packaging = "*"
 express = ["numpy"]
 
 [[package]]
+name = "polars"
+version = "1.33.0"
+description = "Blazingly fast DataFrame library"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "polars-1.33.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:664ef1c0988e4098518c6acfdd5477f2e11611f4ac8a269db55b94ea4978d0e5"},
+    {file = "polars-1.33.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:2477b720c466914549f0f2cfc69f617a602d91e9d90205b64d795ed1ecf99b3c"},
+    {file = "polars-1.33.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bd9b76abc22fdb20a005c629ee8c056b0545433f18854b929fb54e351d1b98ee"},
+    {file = "polars-1.33.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:6e78026c2ece38c45c6ee0416e2594980652d89deee13a15bd9f83743ec8fa8d"},
+    {file = "polars-1.33.0-cp39-abi3-win_amd64.whl", hash = "sha256:7973568178117667871455d7969c1929abb890597964ca89290bfd89e4366980"},
+    {file = "polars-1.33.0-cp39-abi3-win_arm64.whl", hash = "sha256:c7d614644eda028907965f8203ac54b9a4f5b90303de2723bf1c1087433a0914"},
+    {file = "polars-1.33.0.tar.gz", hash = "sha256:50ad2ab96c701be2c6ac9b584d9aa6a385f228f6c06de15b88c5d10df7990d56"},
+]
+
+[package.extras]
+adbc = ["adbc-driver-manager[dbapi]", "adbc-driver-sqlite[dbapi]"]
+all = ["polars[async,cloudpickle,database,deltalake,excel,fsspec,graph,iceberg,numpy,pandas,plot,pyarrow,pydantic,style,timezone]"]
+async = ["gevent"]
+calamine = ["fastexcel (>=0.9)"]
+cloudpickle = ["cloudpickle"]
+connectorx = ["connectorx (>=0.3.2)"]
+database = ["polars[adbc,connectorx,sqlalchemy]"]
+deltalake = ["deltalake (>=1.0.0)"]
+excel = ["polars[calamine,openpyxl,xlsx2csv,xlsxwriter]"]
+fsspec = ["fsspec"]
+gpu = ["cudf-polars-cu12"]
+graph = ["matplotlib"]
+iceberg = ["pyiceberg (>=0.7.1)"]
+numpy = ["numpy (>=1.16.0)"]
+openpyxl = ["openpyxl (>=3.0.0)"]
+pandas = ["pandas", "polars[pyarrow]"]
+plot = ["altair (>=5.4.0)"]
+polars-cloud = ["polars-cloud (>=0.0.1a1)"]
+pyarrow = ["pyarrow (>=7.0.0)"]
+pydantic = ["pydantic"]
+sqlalchemy = ["polars[pandas]", "sqlalchemy"]
+style = ["great-tables (>=0.8.0)"]
+timezone = ["tzdata ; platform_system == \"Windows\""]
+xlsx2csv = ["xlsx2csv (>=0.8.0)"]
+xlsxwriter = ["xlsxwriter"]
+
+[[package]]
 name = "pre-commit"
 version = "4.0.1"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -4531,6 +4599,25 @@ files = [
 
 [package.extras]
 diagrams = ["jinja2", "railroad-diagrams"]
+
+[[package]]
+name = "pypdf2"
+version = "3.0.1"
+description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "PyPDF2-3.0.1.tar.gz", hash = "sha256:a74408f69ba6271f71b9352ef4ed03dc53a31aa404d29b5d31f53bfecfee1440"},
+    {file = "pypdf2-3.0.1-py3-none-any.whl", hash = "sha256:d16e4205cfee272fbdc0568b68d82be796540b1537508cef59388f839c191928"},
+]
+
+[package.extras]
+crypto = ["PyCryptodome"]
+dev = ["black", "flit", "pip-tools", "pre-commit (<2.18.0)", "pytest-cov", "wheel"]
+docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
+full = ["Pillow", "PyCryptodome"]
+image = ["Pillow"]
 
 [[package]]
 name = "python-dateutil"
@@ -6963,4 +7050,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.10.15"
-content-hash = "6e5bc984b363cf9539e9fb7af7bb81ba3750f2bd3fb6279418317f2522dff398"
+content-hash = "16ec3359b941840eeaa2a322b8d356926bac89cb59fef304729475de2138a082"
