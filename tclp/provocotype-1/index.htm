@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Get quick insights on your contracts</title>
+  <title>Get quick insights on your contracts heloo</title>
   <meta name="description" content="">
   <link rel="icon" href="assets/img/favicon.svg">
   <link rel="stylesheet" href="assets/css/style.css">
@@ -219,13 +219,13 @@
           // Single processing flow for both uploaded files and sample contracts
           try {
             console.log('Processing file:', fileToProcess.name);
-            
+
             // Call /process/ endpoint
             console.log('Calling /process/ endpoint...');
             const formData = new FormData();
             formData.append('files', fileToProcess, fileToProcess.name);
             formData.append('is_folder', 'false');
-            
+
             const resp = await fetch('/process/', { method: 'POST', body: formData });
             console.log('Process response status:', resp.status);
             if (!resp.ok) {
