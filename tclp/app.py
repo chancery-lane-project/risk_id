@@ -12,7 +12,7 @@ import joblib
 import pandas as pd
 import torch
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -65,7 +65,7 @@ MODEL_PATH = "models/CC_BERT/CC_model_detect"
 CLAUSE_FOLDER = "data/cleaned_content"
 CLAUSE_HTML = "data/clause_boxes"
 CLAUSE_TAGS = "data/clause_tags_with_clusters.xlsx"
-EMISSION_INDICATORS = "data/full_emissions_table.csv"
+EMISSION_INDICATORS = "data/full_emissions_table_2.csv"
 EMISSION_TAXONOMY = 'data/emissions_topics.csv'
 INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
 ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
@@ -82,7 +82,7 @@ os.makedirs(output_dir, exist_ok=True)
 app.mount("/output", StaticFiles(directory=output_dir), name="output")
 
 print("[INFO] Loading model and data...")
-tokenizer, d_model, c_model, names, docs, final_df = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
+tokenizer, d_model, c_model, names, docs, final_df, child_names, name_to_child, name_to_url = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
 clause_tags = pd.read_excel(CLAUSE_TAGS)
 emission_df = pd.read_csv(EMISSION_INDICATORS)
 with open(CLUSTERING_MODEL, 'rb') as f:
@@ -100,7 +100,7 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1")
 
 @app.post("/process/")
-async def process_contract(files: list[UploadFile], is_folder: str = Form("false")):
+async def process_contract(files: list[UploadFile]):
     """
     Endpoint to process a contract file or folder.
     """
@@ -143,15 +143,14 @@ async def process_contract(files: list[UploadFile], is_folder: str = Form("false
         result_df, _ = utils.create_result_df(results, processed_contracts)
         
         
-        if is_folder == "false":
-            highlighted_output = utils.highlight_climate_content(result_df)
-            # Save into output directory with timestamp to ensure freshness
-            import time
-            timestamp = int(time.time())
-            filename = f"highlighted_output_{timestamp}.html"
-            filepath = os.path.join(output_dir, filename)
-            utils.save_file(filepath, highlighted_output)
-            print(f"Saved highlighted output to: {filepath}")
+        highlighted_output = utils.highlight_climate_content(result_df)
+        # Save into output directory with timestamp to ensure freshness
+        import time
+        timestamp = int(time.time())
+        filename = f"highlighted_output_{timestamp}.html"
+        filepath = os.path.join(output_dir, filename)
+        utils.save_file(filepath, highlighted_output)
+        print(f"Saved highlighted output to: {filepath}")
 
         contract_df = utils.create_contract_df(
             result_df, processed_contracts, labelled=False
@@ -249,7 +248,7 @@ async def find_clauses(file: UploadFile = File(...)):
     response = client.chat.completions.create(
         model="deepseek/deepseek-r1-0528-qwen3-8b:free", 
         messages= messages,
-        temperature=0.1,
+        temperature=0,
         max_tokens=1000
     )
 
@@ -266,9 +265,19 @@ async def find_clauses(file: UploadFile = File(...)):
             f"Full Text:\n{row['text']}\n\n"
         )
 
-    clause_block += '''Select the 3 clauses from the list that best align with the contract. Follow these rules:
+    clause_block += '''Select the clauses from the list that best align with the contract. 
+    It is really important that you answer this consistently and the same way every time. If I upload the same contract against, I expect to see the same answer. 
+    
+    This is a two step process. 
+    
+    Step 1: Binary select the clauses that are a good fit for the contract. Go through one by one and remember which ones you selected as a potential fit. As a rule of thumb, give no fewer than 3 and no more than 7. If there is good reason, you can do fewer or more.
+    Step 2: Go through those that you have selected as a fit and provide reasoning. Feel free to reconsider whether they are a fit once you go through them again. 
+    
+    Before you being, read the rules below. They should guide you on both steps. 
+    
+    Follow these rules:
 
-    1. Your response must be a JSON of exactly three objects, each with the keys "Clause Name" and "Reasoning".
+    1. Your response must be a JSON of exactly as many objects as there are clauses you have selected as a fit, each with the keys "Clause Name" and "Reasoning".
     3. Only select from the clauses provided — do not invent new ones.
     4. Remember the contract’s **content and purpose**. Their goal is likely not to reduce their emissions, but to meet other business or legal needs. We are telling them where they can inject climate-aligned language into the existing contract but the existing contract and its goals are the most important consideration.
     5. Pay close attention to what the contract is **doing** — the transaction type, structure, and key obligations — not just who the parties are or what sector they operate in.
@@ -290,7 +299,7 @@ async def find_clauses(file: UploadFile = File(...)):
     response = client.chat.completions.create(
         model="deepseek/deepseek-r1-0528-qwen3-8b:free",  
         messages= messages,
-        temperature=0.1,
+        temperature=0,
     )
 
     response_text = response.choices[0].message.content
@@ -330,7 +339,7 @@ async def find_clauses(file: UploadFile = File(...)):
         retry = client.chat.completions.create(
             model="deepseek/deepseek-r1-0528-qwen3-8b:free",
             messages=messages,
-            temperature=0.1,
+            temperature=0,
         )
         response_text = retry.choices[0].message.content
         df_response = utils.parse_response(response_text)
@@ -383,9 +392,15 @@ async def find_clauses(file: UploadFile = File(...)):
                 emissions_sources = []
         else:
             emissions_sources = []
+        
+        # Get child name and URL from mappings
+        child_name = name_to_child.get(clause_name, "")
+        clause_url = name_to_url.get(clause_name, "")
             
         matches.append({
             "name": clause_name,
+            "child_name": child_name,
+            "clause_url": clause_url,
             "reason": row["Reasoning"],
             "emissions_sources": emissions_sources,
             "excerpt": excerpt,
@@ -433,7 +448,8 @@ def get_clause(clause_name: str):
             full_title = _normalized_map[close[0]]
 
     idx = names.index(full_title)
-    return {"name": full_title, "text": docs[idx]}
+    child_name = name_to_child.get(full_title, "")
+    return {"name": full_title, "text": docs[idx], "child_name": child_name}
 
 @app.get("/emission_taxonomy", response_class=HTMLResponse)
 async def serve_emission_taxonomy():

@@ -156,10 +156,12 @@ document.addEventListener("DOMContentLoaded", function () {
   })();
 
   // Bind Fancybox to any element with the data-fancybox attribute
-  Fancybox.bind('[data-fancybox]', {
-    // optional options
-    groupAll: false
-  });
+  if (typeof Fancybox !== 'undefined') {
+    Fancybox.bind('[data-fancybox]', {
+      // optional options
+      groupAll: false
+    });
+  }
 
 
 });

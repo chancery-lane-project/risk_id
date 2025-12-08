@@ -8,3 +8,6 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
+tclp/provocotype-1/assets/static-pages/
+tclp/output/
+tclp/stanford_law/

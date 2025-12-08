@@ -141,9 +141,14 @@ def highlight_climate_content(results_df, text_column="sentence", prediction_col
         prediction = row[prediction_column]
         keyword_match = row[keyword_column]
 
+        # TEMPORARY WORKAROUND FOR DEMO: Both prediction=1 cases highlight in yellow
+        # TODO: In the future, consider:
+        # 1. Different colors for different cases (green for prediction+keywords, yellow for prediction only)
+        # 2. Only highlighting predicted clauses (prediction=1) for production use
+        # 3. This current approach highlights ALL climate-related content for demo visibility
         if prediction == 1 and keyword_match:
-            # Highlight in green for prediction + keyword match
-            color = "lightgreen"
+            # Highlight in yellow for prediction + keyword match (was lightgreen)
+            color = "yellow"
             highlighted_segment = (
                 f"<span style='background-color: {color};'>{text}</span>"
             )
@@ -157,8 +162,16 @@ def highlight_climate_content(results_df, text_column="sentence", prediction_col
             )
             highlighted_text += highlighted_segment + "<br><br>"
 
+        elif prediction == 0 and keyword_match:
+            # Highlight in yellow for keyword match but no prediction (model missed it) - was orange
+            color = "yellow"
+            highlighted_segment = (
+                f"<span style='background-color: {color};'>{text}</span>"
+            )
+            highlighted_text += highlighted_segment + "<br><br>"
+
         else:
-            # No highlight
+            # No highlight - no prediction and no keywords
             highlighted_text += text + "<br><br>"
 
     # Wrap in basic HTML structure
@@ -189,7 +202,7 @@ def create_contract_df(results_df, processed_contracts, labelled=True):
     for contract_id, group in combined_df.groupby("index"):
         predicted_clauses = group[group["prediction"] == 1]
         if not predicted_clauses.empty:
-            no_keyword_count = (predicted_clauses["contains_climate_keyword"] == False).sum()
+            no_keyword_count = (~predicted_clauses["contains_climate_keyword"]).sum()
             total_predicted = len(predicted_clauses)
             # If 40% or more don't have a keyword match, mark as False
             keyword_pass = (no_keyword_count / total_predicted) < 0.5
@@ -312,13 +325,10 @@ def create_threshold_buckets(contract_df):
 
     df["bucket"] = df["prediction"].apply(assign_bucket)
 
-    # Step 2: Downgrade if keyword_pass == False
-    df.loc[df["keyword_pass"] == False, "bucket"] -= 1
+    # REMOVED: Step 2 that downgraded if keyword_pass == False
+    # Now bucket assignment is purely based on prediction score
 
-    # Step 3: Ensure bucket is not less than 0
-    df["bucket"] = df["bucket"].clip(lower=0)
-
-    # Step 4: Assign contracts to buckets
+    # Step 2: Assign contracts to buckets
     bucket_0 = df[df["bucket"] == 0]  # none
     bucket_1 = df[df["bucket"] == 1]  # could contain
     bucket_2 = df[df["bucket"] == 2]  # likely
@@ -425,7 +435,7 @@ def zip_folder(folder_path, zip_file_path):
 climate_keywords = [
     "adaptation", "agriculture", "air pollutants", "air quality", "allergen",
     "alternative energy portfolio standard", "animal health", "asthma", "atmosphere",
-    "cafe standards", "cap and trade", "cap-and-trade-program", "carbon asset risks",
+    "cafe standards", "cap and trade", "cap-and-trade-program", "carbon", "carbon asset risks",
     "carbon controls", "carbon dioxide", "co2", "carbon footprint", "carbon intensity",
     "carbon pollution", "carbon pollution standard", "carbon tax", "catastrophic events",
     "ch4", "changing precipitation patterns", "clean air act", "clean energy", "clean power plan",
@@ -498,7 +508,7 @@ def create_result_df(results, processed_contracts):
     
     result_df = add_climate_keyword_column(result_df)
     
-    result_df_true = result_df[result_df['contains_climate_keyword'] == True]
+    result_df_true = result_df[result_df["contains_climate_keyword"]]
     
     return result_df, result_df_true
 
@@ -540,10 +550,11 @@ def predict_climatebert(texts, tokenizer, device, model, batch_size=16):
 # utils.py
 """This is the utils file for the clause_recommender task."""
     
-def load_clauses(clause_folder):
+def load_clauses(clause_folder, childs_name=False):
     documents = []
     file_names = []
     clause_titles = []
+    child_names = []
 
     for fname in sorted(os.listdir(clause_folder)):
         if fname.endswith(".txt"):
@@ -553,7 +564,7 @@ def load_clauses(clause_folder):
                 documents.append(content)
                 file_names.append(fname)
 
-                # Try to extract the <h4> title if available
+                # Parse HTML to extract <h4> title
                 soup = BeautifulSoup(content, "html.parser")
                 title_tag = soup.find("h4")
                 if title_tag:
@@ -561,7 +572,18 @@ def load_clauses(clause_folder):
                 else:
                     clause_titles.append(fname.replace(".txt", ""))  # fallback
 
-    return documents, file_names, clause_titles
+                # Optionally extract child's name
+                if childs_name:
+                    child_tag = soup.find("p", class_="childs-name")
+                    if child_tag:
+                        child_names.append(child_tag.text.strip())
+                    else:
+                        child_names.append("")  # fallback if not present
+
+    if childs_name:
+        return documents, file_names, clause_titles, child_names
+    else:
+        return documents, file_names, clause_titles
 
 def custom_stop_words():
     legal_words = [
@@ -812,22 +834,50 @@ def rebuild_documents(df):
     
     return filenames, documents
 
+def create_name_to_child_mapping(final_df):
+    """
+    Create a mapping from clause names (titles) to child names.
+    """
+    name_to_child = {}
+    for _, row in final_df.iterrows():
+        title = row['Title']
+        child_name = row['Name'] if pd.notna(row['Name']) else ""
+        name_to_child[title] = child_name
+    return name_to_child
+
+def create_name_to_url_mapping(final_df):
+    """
+    Create a mapping from clause names (titles) to URLs.
+    """
+    name_to_url = {}
+    for _, row in final_df.iterrows():
+        title = row['Title']
+        url = row['URL'] if pd.notna(row['URL']) else ""
+        name_to_url[title] = url
+    return name_to_url
+
 def getting_started(model_path, clause_folder, clause_html):
     model_path = os.path.abspath(model_path)
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
     detector_model = AutoModelForSequenceClassification.from_pretrained(model_path, local_files_only=True)
     classifier_model = detector_model.base_model
-    #this is specific to embeddings; we have now lost the classification head
+    # this is specific to embeddings; we have now lost the classification head
 
     documents, file_names, _ = load_clauses(clause_folder)
 
-    clause_boxes, _, _ = load_clauses(clause_html)
+    # Get child's name from clause_html
+    clause_boxes, _, _, child_names = load_clauses(clause_html, childs_name=True)
     clause_box_df = parse_clause_boxes_to_df(clause_boxes)
     final_df = attach_documents(clause_box_df, documents, file_names)
-    final_df
     names, docs = rebuild_documents(final_df)
     
-    return tokenizer, detector_model, classifier_model, names, docs, final_df
+    # Create a mapping from clause names to child names
+    name_to_child = create_name_to_child_mapping(final_df)
+    
+    # Create a mapping from clause names to URLs
+    name_to_url = create_name_to_url_mapping(final_df)
+    
+    return tokenizer, detector_model, classifier_model, names, docs, final_df, child_names, name_to_child, name_to_url
 
 def combine_title_and_text(row, title_to_document):
     title = row['Clause']

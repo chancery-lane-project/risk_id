@@ -12,48 +12,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <!-- lightbox -->
   <link rel="stylesheet" href="assets/css/fancybox.css" />
-  <style>
-    .emissions-table-container {
-      margin-top: 1rem;
-    }
-    
-    .emissions-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-    }
-    
-    .emissions-table th,
-    .emissions-table td {
-      border: 1px solid #ddd;
-      padding: 8px 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-    
-    .emissions-table th {
-      background-color: #f5f5f5;
-      font-weight: 600;
-      color: #333;
-    }
-    
-    .emissions-table tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    .emissions-table tr:hover {
-      background-color: #f0f0f0;
-    }
-    
-    .emissions-table h5 {
-      margin-bottom: 0.5rem;
-      color: #333;
-      font-weight: 600;
-    }
-  </style>
-</head>
+
   <script>
+    // Handler #1: processResult (classification + highlighted link + contract title)
     document.addEventListener('DOMContentLoaded', function () {
       const params = new URLSearchParams(window.location.search);
       const contractName =
@@ -71,6 +32,7 @@
         const raw = sessionStorage.getItem('processResult');
         if (raw) {
           const data = JSON.parse(raw);
+
           // Update score label (basic example)
           const scoreEls = document.querySelectorAll('.score-overview');
           scoreEls.forEach(el => el.classList.remove('active'));
@@ -89,12 +51,23 @@
           if (p && data.highlighted_output_url) {
             const a = document.createElement('a');
             a.href = data.highlighted_output_url;
-            a.target = '_blank';
-            a.textContent = 'Open highlighted analysis';
-            const sep = document.createTextNode(' ');
+            a.setAttribute('data-fancybox', '');
+            a.setAttribute('data-type', 'ajax');
+            a.setAttribute('data-src', data.highlighted_output_url);            
+            a.textContent = 'View analysis';
             p.appendChild(document.createElement('br'));
-            p.appendChild(sep);
+            p.appendChild(document.createTextNode(' '));
             p.appendChild(a);
+            
+            // Bind fancybox to the newly created element
+            // Use setTimeout to ensure fancybox is fully loaded
+            setTimeout(() => {
+              if (typeof Fancybox !== 'undefined') {
+                Fancybox.bind(a, {
+                  groupAll: false
+                });
+              }
+            }, 100);
           }
         }
       } catch (e) {
@@ -110,12 +83,12 @@
   <header class="site-header row" role="banner">
     <div class="container">
       <h1 class="site-title">
-        <img src="assets/img/logo-white.svg" class="white" />
-        <img src="assets/img/logo.svg" class="blue" />
+        <img src="assets/img/logo-white.svg" class="white" alt="Logo white"/>
+        <img src="assets/img/logo.svg" class="blue" alt="Logo"/>
       </h1>
       <!--
       <nav aria-label="Primary" class="site-nav">
-        <a class="btn" href="https://chancerylaneproject.org/" target="_blank">Main site</a>
+        <a class="btn" href="https://chancerylaneproject.org/" target="_blank" rel="noopener noreferrer">Main site</a>
       </nav> -->
     </div>
   </header>
@@ -124,94 +97,98 @@
     <section class="container">
       <div class="row report">
 
-          <section class="summary">
-            <div class="govuk-phase-banner">
-              <p class="govuk-phase-banner__content">
-                <strong class="govuk-tag govuk-phase-banner__content__tag">
-                  Alpha
-                </strong>
-                <span class="govuk-phase-banner__text">
-                  Learn how to reduce emissions and build climate resilience in a contract
-                </span>
+        <section class="summary">
+          <div class="govuk-phase-banner">
+            <p class="govuk-phase-banner__content">
+              <strong class="govuk-tag govuk-phase-banner__content__tag">Alpha</strong>
+              <span class="govuk-phase-banner__text">
+                Learn how to reduce emissions and build climate resilience in a contract
+              </span>
+            </p>
+          </div>
+
+          <h2 id="contract-title">[Contract name will go here]</h2>
+
+          <div class="row meta-data-summary">
+            <span>
+              <strong>Sector:</strong><br />
+              Public Sector
+            </span>
+            <span>
+              <strong>Subject matter:</strong><br />
+              Service Level Agreement
+            </span>
+            <span>
+              <strong>Content:</strong><br />
+              5 pages / 3,116 words
+            </span>
+            <span>
+              <strong>Analysis time:</strong><br />
+              5 seconds
+            </span>
+          </div>
+
+          <div class="row scoring">
+            <div class="col score-summary">
+              <p class="score-overview none">None</p>
+              <p class="score-overview basic">BASIC</p>
+              <p class="score-overview moderate">Moderate</p>
+              <p class="score-overview strong">Strong</p>
+
+              <p class="context">
+                <strong>Climate-aligned language detected</strong><br/>
+                Some climate-aligned clauses included and mentions of carbon footprint.
               </p>
             </div>
-            <h2 id="contract-title">[Contract name will go here]</h2>
-            <div class="row meta-data-summary">
-              <span>
-                  <strong>Sector:</strong><br />
-                  Public Sector
-              </span>
-              <span>
-                  <strong>Subject matter:</strong><br />
-                  Service Level Agreement
-              </span>
-              <span>
-                  <strong>Content:</strong><br />
-                  5 pages / 3,116 words
-              </span>
-              <span>
-                  <strong>Analysis time:</strong><br />
-                  5 seconds
-              </span>
+
+            <div class="col quant-summary">
+              <p><strong id="clause-count">0</strong> Recommended clauses</p>
             </div>
-            <div class="row scoring">
-              <div class="col score-summary">
-
-                <p class="score-overview none">None</p>
-                <p class="score-overview basic">BASIC</p>
-                <p class="score-overview moderate">Moderate</p>
-                <p class="score-overview strong">Strong</p>
-
-
-                <p class="context"><strong>Climate-aligned language detected</strong><br/>Some climate-aligned clauses included and mentions of carbon footprint.</p>
-              </div>
-              <div class="col quant-summary">
-                <p><strong>3</strong> Reccomended clauses</p>
-              </div>
-              <div class="col quant-summary">
-                <p><strong>2</strong> Possible emissions addressed</p>
-              </div>
+            <div class="col quant-summary">
+              <!-- Add stable id so JS can update reliably (replaces brittle text==='2' check) -->
+              <p><strong id="emissions-count">2</strong> Possible emissions addressed</p>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section class="row">
-              <h2>Recommended clauses to review</h2>
-              <div class="row clause-stack" id="recommendation-list">
-                <!-- Clauses will be dynamically inserted here by JS below -->
-                <noscript>
-                  <article class="clause">
-                    <div class="row clause-inner">
-                      <p class="child-name">[Clause name]</p>
-                      <h3 class="clause-title">[Clause title]</h3>
-                      <p class="clause-excerpt">
-                        [Clause excerpt/summary]
-                      </p>
-                      <time><strong>Updated:</strong> [Date]</time>
-                    </div>
-                    <div class="row clause-toggle">
-                      <h4>Show emissions and how they're addressed</h4>
-                      <div class="row clause-toggle-inner">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th scope="col">Emissions source</th>
-                              <th scope="col">How it’s addressed</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td>[Source]</td>
-                              <td>[How addressed]</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </article>
-                </noscript>
-              </div>
-          </section>
-
+        <section class="row">
+          <h2>Recommended clauses to review</h2>
+          <div class="row clause-stack" id="recommendation-list">
+            <!-- Clauses will be dynamically inserted here by JS below -->
+            <noscript>
+              <article class="clause">
+                <div class="row clause-inner">
+                  <p class="child-name">[Child name]</p>
+                  <h3 class="clause-title">[Clause title]</h3>
+                  <p class="clause-excerpt">
+                    [Clause excerpt/summary]
+                  </p>
+                  <time><strong>Updated:</strong> [Date]</time>
+                </div>
+                <div class="row clause-toggle">
+                  <h4>Show emissions and how they're addressed</h4>
+                  <div class="row clause-toggle-inner">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">Emissions source</th>
+                          <th scope="col">How it’s addressed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>[Source]</td>
+                          <td>[How addressed]</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div class="row"><a href="#" class="btn sml" target="_blank">View clause full text</a></div>
+                  </div>
+                </div>
+              </article>
+            </noscript>
+          </div>
+        </section>
 
       </div>
     </section>
@@ -227,66 +204,87 @@
   <!-- lightbox -->
   <script src="assets/js/fancybox.umd.js"></script>
   <script src="assets/js/main.js" defer></script>
+
   <script>
+    // Handler #2: recommendResult (recommended clauses list + counts)
     document.addEventListener('DOMContentLoaded', function() {
+
       // Load recommendations from sessionStorage
       try {
-        console.log('Loading recommendations from sessionStorage...');
         const raw = sessionStorage.getItem('recommendResult');
-        console.log('Raw recommendResult:', raw);
-        
+
         if (raw) {
           const data = JSON.parse(raw);
-          console.log('Parsed data:', data);
           const list = document.getElementById('recommendation-list');
-          console.log('Recommendation list element:', list);
-          console.log('Data matches:', data.matches);
-          
+
           if (list && data.matches && data.matches.length > 0) {
             // Clear any existing content and replace with real recommendations
             list.innerHTML = '';
-            
-            // Count unique topics across all matches
-            const allTopics = new Set();
+
+            // Count unique emission labels across all matches and count actual clauses
+            const allEmissionLabels = new Set();
+            let actualClauseCount = 0;
+
             data.matches.forEach(match => {
+              actualClauseCount++; // Count each match as a clause
               if (match.emissions_sources && match.emissions_sources.length > 0) {
                 match.emissions_sources.forEach(emission => {
-                  if (emission.topic_name && emission.topic_name !== 'N/A' && emission.topic_name !== '') {
-                    allTopics.add(emission.topic_name);
+                  if (emission.emission_label && emission.emission_label !== 'N/A' && emission.emission_label !== '') {
+                    allEmissionLabels.add(emission.emission_label);
                   }
                 });
               }
             });
-            const uniqueTopicCount = allTopics.size;
-            
-            // Update the hardcoded count in the summary section
-            const summaryElements = document.querySelectorAll('.quant-summary p strong');
-            summaryElements.forEach(element => {
-              if (element.textContent === '2' && element.parentElement.textContent.includes('Possible emissions addressed')) {
-                element.textContent = uniqueTopicCount;
-              }
-            });
-            
-            data.matches.forEach((m, index) => {
+
+            const uniqueEmissionLabelCount = allEmissionLabels.size;
+
+            // Update the clause count in the summary section
+            const clauseCountElement = document.getElementById('clause-count');
+            if (clauseCountElement) {
+              clauseCountElement.textContent = String(actualClauseCount);
+            } else {
+              // Fallback: find by text content (kept for backward-compat)
+              const allStrongElements = document.querySelectorAll('.quant-summary p strong');
+              allStrongElements.forEach(element => {
+                if (element.parentElement && element.parentElement.textContent.includes('Recommended clauses')) {
+                  element.textContent = String(actualClauseCount);
+                }
+              });
+            }
+
+            // Update the emissions count in the summary section (robust id-based update)
+            const emissionsCountElement = document.getElementById('emissions-count');
+            if (emissionsCountElement) {
+              emissionsCountElement.textContent = String(uniqueEmissionLabelCount);
+            } else {
+              // Backwards-compat fallback (brittle path retained but no longer primary)
+              const summaryElements = document.querySelectorAll('.quant-summary p strong');
+              summaryElements.forEach(element => {
+                if (element.textContent === '2' && element.parentElement && element.parentElement.textContent.includes('Possible emissions addressed')) {
+                  element.textContent = String(uniqueEmissionLabelCount);
+                }
+              });
+            }
+
+            // Render each recommendation
+            data.matches.forEach((m) => {
               const article = document.createElement('article');
               article.className = 'clause';
               article.innerHTML = `
                 <div class="row clause-inner">
+                  ${m.child_name ? `<p class="child-name">${m.child_name}</p>` : ''}
                   <h3 class="clause-title">${m.name || 'Unnamed clause'}</h3>
-                  <p class="clause-excerpt">${m.excerpt || 'No excerpt available'}</p>
+                  <p class="clause-excerpt"><strong>Why this clause:</strong> ${m.reason || 'No reason available'}</p>
                 </div>
                 <div class="row clause-toggle">
                   <h4>Show emissions and how they're addressed</h4>
                   <div class="row clause-toggle-inner">
-                    <p><strong>Reasoning:</strong> ${m.reason || 'No reasoning provided'}</p>
                     ${m.emissions_sources && m.emissions_sources.length > 0 ? `
                       <div class="emissions-table-container">
-                        <h5>Emissions Sources and Topics:</h5>
                         <table class="emissions-table">
                           <thead>
                             <tr>
                               <th>Emission Source</th>
-                              <th>Topic</th>
                               <th>Justification</th>
                             </tr>
                           </thead>
@@ -294,7 +292,6 @@
                             ${m.emissions_sources.map(emission => `
                               <tr>
                                 <td>${emission.emission_label || 'N/A'}</td>
-                                <td>${emission.topic_name || 'N/A'}</td>
                                 <td>${emission.justification || 'N/A'}</td>
                               </tr>
                             `).join('')}
@@ -302,6 +299,7 @@
                         </table>
                       </div>
                     ` : '<p><strong>Climate emissions sources addressed:</strong> No specific emissions sources identified</p>'}
+                    <div class="row"><a href="${m.clause_url || '#'}" class="btn sml" target="_blank">View clause full text</a></div>
                   </div>
                 </div>
               `;
@@ -309,9 +307,9 @@
             });
           } else {
             // If no recommendations, show a message
-            const list = document.getElementById('recommendation-list');
-            if (list) {
-              list.innerHTML = '<p>No specific clauses were recommended for this contract.</p>';
+            const listEl = document.getElementById('recommendation-list');
+            if (listEl) {
+              listEl.innerHTML = '<p>No specific clauses were recommended for this contract.</p>';
             }
           }
         } else {
@@ -325,10 +323,15 @@
         console.error('Error loading recommendations:', e);
         console.error('Error details:', e.message);
         console.error('Error stack:', e.stack);
-        // Show error message
+        // Show error message with more details
         const list = document.getElementById('recommendation-list');
         if (list) {
-          list.innerHTML = '<p>Error loading recommendations. Please try again.</p>';
+          list.innerHTML = `<p>Error loading recommendations: ${e.message}. Please try again.</p>`;
+        }
+        // Also update the clause count to show 0
+        const clauseCountElement = document.getElementById('clause-count');
+        if (clauseCountElement) {
+          clauseCountElement.textContent = '0';
         }
       }
     });
