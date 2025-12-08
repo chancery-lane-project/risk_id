@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get quick insights on your contracts</title>
+  <meta name="description" content="">
+  <link rel="icon" href="assets/img/favicon.svg">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <!-- lightbox -->
+  <link rel="stylesheet" href="assets/css/fancybox.css" />
+  <!-- Fathom - beautiful, simple website analytics -->
+  <script src="https://cdn.usefathom.com/script.js" data-site="NLHUCFHP" defer></script>
+  <!-- / Fathom -->
+</head>
+
+<body class=""><!-- use classes "vanilla" for minimal styling mode, or "animated" for changing background gradient -->
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- loading screen -->
+  <div id="loading-screen">
+    <div class="loading-state playing">
+      <div class="image"></div>
+      <div class="wave"></div>
+      <div class="wave"></div>
+      <div class="wave"></div>
+      <div class="loading-inner-wrapper">
+        <div class="loading-content-wrap" id="state-1">
+          <span class="spinner"><img src="assets/img/loading-state-1.gif" /></span>
+          <p><strong>Analysing contract</strong><p>
+          <p>Scanning structure, text and metadata</p>
+        </div>
+        <div class="loading-content-wrap" id="state-2">
+          <span class="spinner"><img src="assets/img/loading-state-2.gif" /></span>
+          <p><strong>Finding relevant clauses</strong><p>
+          <p>Matching content to legal topics</p>
+        </div>
+        <div class="loading-content-wrap" id="state-3">
+          <span class="spinner"><img src="assets/img/loading-state-3.gif" /></span>
+          <p><strong>Preparing report</strong><p>
+          <p>Ranking insights and formatting your summary</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-grad"></div>
+  </div>
+  <!-- end loading screen -->
+
+
+
+  <header class="site-header row" role="banner">
+    <div class="container">
+      <h1 class="site-title">
+        <img src="assets/img/logo-white.svg" class="white" />
+        <img src="assets/img/logo.svg" class="blue" />
+      </h1>
+      <!--
+      <nav aria-label="Primary" class="site-nav">
+        <a class="btn" href="https://chancerylaneproject.org/" target="_blank">Main site</a>
+      </nav> -->
+    </div>
+  </header>
+
+  <main id="main" class="site-main row" role="main">
+    <section class="container">
+      <div class="home-actions">
+        <h2>Get fast insights on your contracts to reduce emissions</h2>
+      </div>
+
+        <div class="select-contract">
+
+          <form action="contract-1.html" method="get" id="analysisForm">
+          <div class="govuk-form-group" id="analysis-group">
+            <fieldset class="govuk-fieldset"aria-describedby="analysis-hint analysis-error">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+                <p id="analysis-hint" class="govuk-fieldset__heading">
+                  Try with a sample contract or upload your own:
+                </p>
+              </legend>
+
+              <!-- Inline error message (hidden by default) -->
+              <p class="govuk-error-message" id="analysis-error" hidden>
+                <span class="govuk-visually-hidden">Error:</span> Select a contract to analyse or upload your own.
+              </p>
+
+              <div class="govuk-radios" data-module="govuk-radios">
+
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="Contract1" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract1-item-hint">
+                  <label class="govuk-label govuk-radios__label" for="Contract1">
+                    <span>Total Facilities Management Agreement (TFMA).DOCX</span>
+                    <div id="Contract1-item-hint" class="govuk-hint govuk-radios__hint">
+                      <span><strong>Sector: </strong><br />Public sector</span>
+                      <span><strong>Subject matter: </strong><br />Service Level Agreement</span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-1.html">Preview contract</a></span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="Contract2" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract2-item-hint">
+                  <label class="govuk-label govuk-radios__label" for="Contract2">
+                    <span>NEC4 Engineering and Construction Contract.PDF</span>
+                    <div id="Contract2-item-hint" class="govuk-hint govuk-radios__hint">
+                      <span><strong>Sector: </strong><br />Construction</span>
+                      <span><strong>Subject matter: </strong><br />Construction Contract</span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-2.html">Preview contract</a></span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="Contract3" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract3-item-hint">
+                  <label class="govuk-label govuk-radios__label" for="Contract3">
+                    <span>Loan Market Association (LMA) Facility Agreement.DOC</span>
+                    <div id="Contract3-item-hint" class="govuk-hint govuk-radios__hint">
+                      <span><strong>Sector: </strong><br />Banking and finance</span>
+                      <span><strong>Subject matter: </strong><br />Loan Agreement</span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-3.html">Preview contract</a></span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input" id="Contract4" name="Contract" type="radio" value="government-gateway" aria-describedby="Contract4-item-hint">
+                  <label class="govuk-label govuk-radios__label" for="Contract4">
+                    <span>Software-as-a-Service (SaaS) Agreement.DOC</span>
+                    <div id="Contract4-item-hint" class="govuk-hint govuk-radios__hint">
+                      <span><strong>Sector: </strong><br />Technology</span>
+                      <span><strong>Subject matter: </strong><br />Software licensing & services</span>
+                      <span><a data-fancybox data-type="iframe" data-type="ajax" data-src="assets/sample-contracts/contract-4.html">Preview contract</a></span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="govuk-radios__item upload">
+                  <input class="govuk-radios__input" id="Contract5" name="Contract" type="radio" value="government-gateway" aria-describedby="Upload-item-hint">
+                  <label class="govuk-label govuk-radios__label" for="Contract5">
+                    <span>Upload your own contract</span>
+                    <div id="Contract5-item-hint" class="govuk-hint govuk-radios__hint">
+                      <span><strong>Accepted files: </strong><br />DOCX, DOC, PDF</span>
+                      <span><strong>Max file size: </strong><br />10MB</span>
+                    </div>
+                  </label>
+                  <div class="upload">
+                    <input id="file" class="upload__input" type="file" accept=".pdf,.doc,.docx" />
+                    <label for="file" class="upload__btn">Choose file</label>
+                    <span class="upload__filename" aria-live="polite"></span>
+                  </div>
+                </div>
+
+
+
+              </div>
+            </fieldset>
+          </div>
+          <button id="getInsights" type="submit" class="yellow">Get insights</button>
+        </form>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer row" role="contentinfo">
+    <div class="container">
+    </div>
+  </footer>
+
+  <div class="bg-grad"></div>
+
+  <!-- lightbox -->
+  <script src="assets/js/fancybox.umd.js"></script>
+  <script src="assets/js/main.js" defer></script>
+
+</body>
+</html>

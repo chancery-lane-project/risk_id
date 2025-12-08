@@ -11,3 +11,5 @@ tclp/clause_detector/notebooks/artifacts/
 .history/
 tclp/models/artifacts/
 .env
+# Ignore macOS Finder settings
+.DS_Store
