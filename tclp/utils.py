@@ -179,6 +179,246 @@ def highlight_climate_content(results_df, text_column="sentence", prediction_col
     return html_content
 
 
+def get_document_styles() -> str:
+    """
+    Returns comprehensive CSS styles for rendering formatted documents.
+    """
+    return """
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.8;
+            color: #333;
+            background-color: #fafafa;
+        }
+        .document-container {
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 0.5em;
+            color: #1a1a1a;
+            border-bottom: 3px solid #4a90e2;
+            padding-bottom: 0.3em;
+        }
+        h2 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #2c3e50;
+        }
+        h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-top: 1.2em;
+            margin-bottom: 0.4em;
+            color: #34495e;
+        }
+        h4 {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-top: 1em;
+            margin-bottom: 0.3em;
+            color: #34495e;
+        }
+        h5, h6 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 0.8em;
+            margin-bottom: 0.3em;
+            color: #34495e;
+        }
+        p {
+            margin: 1em 0;
+            text-align: justify;
+        }
+        ul, ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        li {
+            margin: 0.5em 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4a90e2;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        blockquote {
+            border-left: 4px solid #4a90e2;
+            margin: 1.5em 0;
+            padding-left: 1.5em;
+            color: #666;
+            font-style: italic;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 1em;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-left: 4px solid #4a90e2;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        strong {
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        em {
+            font-style: italic;
+        }
+        a {
+            color: #4a90e2;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 2em 0;
+        }
+        span[style*="background-color: yellow"] {
+            background-color: #ffeb3b !important;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+    """
+
+
+def render_markdown_with_highlights(markdown_content: str, txt_content: str, highlighted_sentences: list = None) -> str:
+    """
+    Render markdown content with highlighting applied based on sentences from txt.
+    Maps highlighted sentences from the txt version to the markdown version.
+    
+    Args:
+        markdown_content: Markdown content from MarkItDown
+        txt_content: Plain text content (used for processing)
+        highlighted_sentences: List of sentences that should be highlighted
+    
+    Returns:
+        HTML string with the document rendered and highlighted
+    """
+    if not highlighted_sentences:
+        # No highlighting needed, just convert markdown to HTML
+        return convert_markdown_to_html(markdown_content)
+    
+    # Convert markdown to HTML first
+    html_content = convert_markdown_to_html(markdown_content)
+    
+    # Now apply highlighting by finding sentences in the HTML
+    # We need to find where each highlighted sentence appears in the HTML
+    for sentence in highlighted_sentences:
+        # Clean the sentence for matching (remove extra whitespace)
+        clean_sentence = ' '.join(sentence.split())
+        
+        # Escape HTML entities in the sentence
+        import html as html_module
+        escaped_sentence = html_module.escape(clean_sentence)
+        
+        # Try to find the sentence in the HTML (it might be split across tags)
+        # First, try exact match
+        pattern = re.escape(escaped_sentence)
+        
+        # Replace with highlighted version
+        # Use a non-greedy approach to avoid over-matching
+        html_content = re.sub(
+            pattern,
+            lambda m: f'<span style="background-color: #ffeb3b; padding: 2px 4px; border-radius: 2px; font-weight: 500;">{m.group(0)}</span>',
+            html_content,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+    
+    # Wrap in full HTML document structure
+    return wrap_html_document(html_content)
+
+
+def convert_markdown_to_html(markdown_content: str) -> str:
+    """
+    Convert markdown content to HTML.
+    
+    Args:
+        markdown_content: Markdown string
+    
+    Returns:
+        HTML string
+    """
+    try:
+        import markdown
+        try:
+            html_content = markdown.markdown(
+                markdown_content,
+                extensions=['extra', 'nl2br']
+            )
+        except (AttributeError, ValueError, TypeError):
+            html_content = markdown.markdown(markdown_content)
+        return html_content
+    except ImportError:
+        return f"<pre>{markdown_content}</pre>"
+
+
+def wrap_html_document(html_content: str) -> str:
+    """
+    Wrap HTML content in a full HTML document with styling.
+    
+    Args:
+        html_content: HTML content to wrap
+    
+    Returns:
+        Complete HTML document string
+    """
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Highlighted Document</title>
+    <style>
+        {get_document_styles()}
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        {html_content}
+    </div>
+</body>
+</html>"""
+
+
 def save_file(filename, content):
     with open(filename, "w") as f:
         f.write(content)
@@ -718,7 +958,7 @@ def find_top_similar_bow(target_doc, documents, file_names, similarity_threshold
     }
     
 def get_embedding_matches_subset(
-    query_text, 
+    query_embedding, 
     documents_subset, 
     names_subset, 
     tokenizer, 
@@ -730,8 +970,8 @@ def get_embedding_matches_subset(
         encode_text(doc, tokenizer, model)
         for doc in documents_subset
     ])
-    # Embed the query
-    query_embedding = encode_text(query_text, tokenizer, model).reshape(1, -1)
+    # Ensure query_embedding is in the right shape (1, embedding_dim)
+    query_embedding = query_embedding.reshape(1, -1) if len(query_embedding.shape) == 1 else query_embedding
 
     # Compute cosine similarity
     _, _, _, similarities, _ = get_matching_clause(query_embedding, subset_embeddings, names_subset)
@@ -1087,6 +1327,16 @@ def parse_response(response_text):
         return None
 
 
+def parse_emissions_sources(combined_labels):
+    """Parse emissions_sources from JSON string or return empty list."""
+    if pd.notna(combined_labels):
+        try:
+            return json.loads(combined_labels)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    return []
+
+
 # Risk utils#
 #-------------------------------------------------------------------#
 
@@ -1192,3 +1442,62 @@ def get_emission_label(response_df, emission_df):
                 "justification": ""
             }])
     return response_df
+
+def convert_file_to_text(file_content: bytes, filename: str) -> str:
+    """
+    Convert various file formats (PDF, DOCX, MD, TXT) to plain text.
+    
+    Args:
+        file_content: Raw file content as bytes
+        filename: Original filename (used to determine file type)
+    
+    Returns:
+        Extracted text as string
+    
+    Raises:
+        ValueError: If file type is not supported
+        Exception: If conversion fails
+    """
+    import io
+    
+    # Determine file extension
+    ext = os.path.splitext(filename.lower())[1]
+    
+    if ext == '.txt':
+        # Plain text file
+        return file_content.decode('utf-8')
+    
+    elif ext == '.md':
+        # Markdown file - just read as text
+        return file_content.decode('utf-8')
+    
+    elif ext == '.pdf':
+        # PDF file using PyPDF2
+        try:
+            import PyPDF2
+            pdf_file = io.BytesIO(file_content)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            text = ''
+            for page in pdf_reader.pages:
+                text += page.extract_text() + '\n'
+            return text
+        except ImportError:
+            raise ImportError("PyPDF2 is required for PDF conversion. Install with: pip install PyPDF2")
+        except Exception as e:
+            raise Exception(f"Error reading PDF file: {str(e)}")
+    
+    elif ext in ['.docx', '.doc']:
+        # DOCX file using python-docx
+        try:
+            from docx import Document
+            docx_file = io.BytesIO(file_content)
+            doc = Document(docx_file)
+            text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+            return text
+        except ImportError:
+            raise ImportError("python-docx is required for DOCX conversion. Install with: pip install python-docx")
+        except Exception as e:
+            raise Exception(f"Error reading DOCX file: {str(e)}")
+    
+    else:
+        raise ValueError(f"Unsupported file type: {ext}. Supported types: .txt, .md, .pdf, .docx, .doc")

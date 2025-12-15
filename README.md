@@ -42,7 +42,7 @@ risk_id-main/
     models/
       clustering_model.pkl   # Pre-trained clustering model
       umap_model.pkl         # Pre-trained UMAP model
-      CC_BERT/               # Climate Contract BERT models
+      CC_BERT/               # Climate Contract BERT models (download required - see Installation)
       wandb/                 # Experiment tracking logs and outputs (Weights & Biases)
 
     provocotype-1/           # Live frontend prototype
@@ -55,7 +55,7 @@ risk_id-main/
         sample-contracts/   # Example contract files
 
     output/                  # Generated highlighted contract outputs (gitignored)
-    data/                    # Data files (gitignored)
+    data/                    # Data files (gitignored - download required - see Installation)
 ```
 
 ---
@@ -92,6 +92,16 @@ poetry shell
 
 Ensure you are using the Python version specified in `.python-version`.  
 
+### Required Data Files and Models
+
+Before running the application, you need to download and set up the required data files and models:
+
+1. **Data Files**: Download the data folder contents from [Google Drive](https://drive.google.com/file/d/1NjdPJlR8lmlyQd6lttNifq6M-k424EiZ/view?usp=sharing) and extract them into the `tclp/data/` directory.
+
+2. **CC_BERT Model**: Download the CC_BERT model from [Google Drive](https://drive.google.com/file/d/1sTpo9iOjhoCZ1qteLqry8jjezWTanSl_/view) and extract it into the `tclp/models/CC_BERT/` directory.
+
+**Note:** These files are not included in the repository due to size limitations and should be downloaded separately.
+
 ---
 
 ## Usage
@@ -125,7 +135,7 @@ The frontend will:
 
 **Note:** You'll need to set up environment variables for the OpenRouter API:
 - `OPENROUTER_API_KEY`: Your OpenRouter API key
-- `OPENROUTER_MODEL`: The model to use (defaults to `tngtech/deepseek-r1t2-chimera:free`)
+- `OPENROUTER_MODEL`: The model to use (defaults to the value of `DEFAULT_MODEL` in `app.py`, currently `tngtech/deepseek-r1t2-chimera:free`)
 
 ---
 

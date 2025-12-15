@@ -1,9 +1,8 @@
+import hashlib
 import os
 import pickle
-import re
 import shutil
-import traceback
-from urllib.parse import unquote
+import time
 
 # Suppress tokenizers parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -15,7 +14,7 @@ import utils
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
@@ -24,11 +23,11 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 load_dotenv()
 
 app = FastAPI()
-MAX_FILE_LIMIT = 1000
 CAT0 = "unlikely"
 CAT1 = "possible"
 CAT2 = "likely"
 CAT3 = "very likely"
+DEFAULT_MODEL = "tngtech/deepseek-r1t2-chimera:free"
 
 # Enable CORS for frontend-backend communication
 app.add_middleware(
@@ -65,7 +64,6 @@ CLAUSE_FOLDER = os.path.join(BASE_DIR, "data", "cleaned_content")
 CLAUSE_HTML = os.path.join(BASE_DIR, "data", "clause_boxes")
 CLAUSE_TAGS = os.path.join(BASE_DIR, "data", "clause_tags_with_clusters.xlsx")
 EMISSION_INDICATORS = os.path.join(BASE_DIR, "data", "full_emissions_table_2.csv")
-EMISSION_TAXONOMY = os.path.join(BASE_DIR, 'data', 'emissions_topics.csv')
 INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index.htm")
 ALT_INDEX_PATH = os.path.join(BASE_DIR, "provocotype-1", "index2.htm")
 CLUSTERING_MODEL = os.path.join(BASE_DIR, 'models', 'clustering_model.pkl')
@@ -86,17 +84,16 @@ clause_tags = pd.read_excel(CLAUSE_TAGS)
 emission_df = pd.read_csv(EMISSION_INDICATORS)
 with open(CLUSTERING_MODEL, 'rb') as f:
     clf = pickle.load(f)
-emission_taxonomy = pd.read_csv(EMISSION_TAXONOMY)
-taxonomy_html = emission_taxonomy.to_html(index=False, classes="table table-sm")
-# Save emission taxonomy into the served output directory
-utils.save_file(os.path.join(output_dir, "emission_taxonomy.html"), taxonomy_html)
 umap_model = joblib.load(UMAP_MODEL)
 device = torch.device("cpu")
 
+# Simple in-memory cache for embeddings (keyed by file content hash)
+# This allows process_contract and find_clauses to share embeddings
+embedding_cache = {}
+
 # --- OpenAI / OpenRouter Setup ---
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "tngtech/deepseek-r1t2-chimera:free")  # Default model
-
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL)  
 if not OPENROUTER_API_KEY:
     print("[WARNING] OPENROUTER_API_KEY not found in environment variables. API calls will fail.")
 else:
@@ -108,122 +105,187 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1")
 
 @app.post("/process/")
-async def process_contract(files: list[UploadFile]):
+async def process_contract(file: UploadFile):
     """
     Endpoint to process a contract file or folder.
     """
-    if len(files) > MAX_FILE_LIMIT:
+    # Cleanup and recreate temp directories
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    os.makedirs(temp_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Check validity and open file
+    allowed_extensions = ['.txt', '.pdf', '.docx', '.doc', '.md']
+    if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
         return JSONResponse(
             content={
-                "error": f"This server can only handle up to {MAX_FILE_LIMIT} files; please try again."
+                "error": f"Only {', '.join(allowed_extensions)} files are supported."
             },
-            status_code=400,  # Bad Request
+            status_code=400,
         )
 
+    # Read file content once
+    file_content = await file.read()
+    
+    # Save original file first (for MarkItDown to process)
+    original_file_path = os.path.join(temp_dir, file.filename)
+    with open(original_file_path, "wb") as f:
+        f.write(file_content)
+    
+    # Convert file to text for processing
     try:
-        # Cleanup and recreate temp directories
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        os.makedirs(temp_dir, exist_ok=True)
-        os.makedirs(output_dir, exist_ok=True)
-
-        print("Processing single file upload...")
-
-        # Handle single file upload
-        file = files[0]
-        if not file.filename.endswith(".txt"):
-            return JSONResponse(
-                content={
-                    "error": "Only .txt files are supported for single file uploads."
-                },
-                status_code=400,
-            )
-
-        file_path = os.path.join(temp_dir, file.filename)
-        with open(file_path, "wb") as f:
-            f.write(await file.read())
-
-        processed_contracts = utils.load_unlabelled_contract(temp_dir)
-        texts = processed_contracts["text"].tolist()
-
-        # Model predictions
-        results, _ = utils.predict_climatebert(texts, tokenizer, device, d_model)
-        result_df, _ = utils.create_result_df(results, processed_contracts)
-        
-        
-        highlighted_output = utils.highlight_climate_content(result_df)
-        # Save into output directory with timestamp to ensure freshness
-        import time
-        timestamp = int(time.time())
-        filename = f"highlighted_output_{timestamp}.html"
-        filepath = os.path.join(output_dir, filename)
-        utils.save_file(filepath, highlighted_output)
-        print(f"Saved highlighted output to: {filepath}")
-
-        contract_df = utils.create_contract_df(
-            result_df, processed_contracts, labelled=False
-        )
-
-        zero, one, two, three = utils.create_threshold_buckets(contract_df)
-
-        result = utils.print_single(
-            zero, one, two, three, return_result=True
-        )
-        response = {
-            "classification": result,
-            "highlighted_content": highlighted_output,
-            "highlighted_output_url": f"/output/{filename}",
-            "bucket_labels": {
-                "cat0": CAT0,
-                "cat1": CAT1,
-                "cat2": CAT2,
-                "cat3": CAT3
-            }
-        }
-
-        # Cleanup
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        os.makedirs(
-            output_dir, exist_ok=True
-        )  # Recreate the output directory after cleanup
-        return JSONResponse(content=response)
-
+        full_contract_text = utils.convert_file_to_text(file_content, file.filename)
     except Exception as e:
-        traceback.print_exc()
         return JSONResponse(
-            content={"error": f"An error occurred: {str(e)}"}, status_code=500
+            content={
+                "error": f"Error converting file to text: {str(e)}"
+            },
+            status_code=400,
         )
+    
+    # Save as .txt file for load_unlabelled_contract to process
+    base_filename = os.path.splitext(file.filename)[0]
+    txt_filename = f"{base_filename}.txt"
+    txt_file_path = os.path.join(temp_dir, txt_filename)
+    with open(txt_file_path, "w", encoding="utf-8") as f:
+        f.write(full_contract_text)
+    
+    # Convert to markdown using MarkItDown for display
+    markdown_content = None
+    try:
+        from markitdown import MarkItDown
+        
+        # MarkItDown needs a file path - use the original file we saved
+        md = MarkItDown()
+        result = md.convert(original_file_path)
+        
+        # MarkItDown returns a ConvertResult object with .text_content attribute
+        if result and hasattr(result, 'text_content'):
+            markdown_content = result.text_content
+        elif result and hasattr(result, 'markdown'):
+            markdown_content = result.markdown
+        elif result:
+            markdown_content = str(result)
+            if markdown_content == "None" or not markdown_content.strip():
+                markdown_content = None
+        
+        # Validate we got actual content
+        if not markdown_content or str(markdown_content).strip() == "":
+            markdown_content = None
+    except Exception as e:
+        print(f"Warning: MarkItDown conversion failed: {str(e)}")
+        markdown_content = None
+    # Embed the full contract text once (will be reused by find_clauses)
+    # Cache it using file content hash as key
+    file_hash = hashlib.md5(file_content).hexdigest()
+    full_contract_embedding = utils.encode_text(full_contract_text, tokenizer, c_model)
+    embedding_cache[file_hash] = {
+        'embedding': full_contract_embedding,
+        'text': full_contract_text
+    }
+
+    processed_contracts = utils.load_unlabelled_contract(temp_dir)
+    texts = processed_contracts["text"].tolist()
+
+    # Model predictions
+    results, _ = utils.predict_climatebert(texts, tokenizer, device, d_model)
+    result_df, _ = utils.create_result_df(results, processed_contracts)
+    
+    # Extract sentences that should be highlighted (prediction=1 or keyword_match)
+    highlighted_sentences = result_df[
+        (result_df['prediction'] == 1) | result_df['contains_climate_keyword']
+    ]['sentence'].tolist()
+    
+    # Render document: use markdown if available, otherwise fallback to txt highlighting
+    if markdown_content and str(markdown_content).strip():
+        try:
+            highlighted_output = utils.render_markdown_with_highlights(
+                markdown_content,
+                full_contract_text,
+                highlighted_sentences
+            )
+        except Exception as e:
+            print(f"Warning: MarkItDown rendering failed: {str(e)}. Using fallback method.")
+            highlighted_output = utils.highlight_climate_content(result_df)
+    else:
+        highlighted_output = utils.highlight_climate_content(result_df)
+    
+    # Save into output directory with timestamp
+    timestamp = int(time.time())
+    filename = f"highlighted_output_{timestamp}.html"
+    filepath = os.path.join(output_dir, filename)
+    utils.save_file(filepath, highlighted_output)
+    print(f"Saved highlighted output to: {filepath}")
+
+    contract_df = utils.create_contract_df(
+        result_df, processed_contracts, labelled=False
+    )
+
+    zero, one, two, three = utils.create_threshold_buckets(contract_df)
+
+    result = utils.print_single(
+        zero, one, two, three, return_result=True
+    )
+    response = {
+        "classification": result,
+        "highlighted_output_url": f"/output/{filename}",
+        "bucket_labels": {
+            "cat0": CAT0,
+            "cat1": CAT1,
+            "cat2": CAT2,
+            "cat3": CAT3
+        }
+    }
+
+    # Cleanup
+    shutil.rmtree(temp_dir, ignore_errors=True)
+    os.makedirs(
+        output_dir, exist_ok=True
+    )  # Recreate the output directory after cleanup
+    return JSONResponse(content=response)
 
 @app.post("/find_clauses/")
 async def find_clauses(file: UploadFile = File(...)):
-    if not file.filename.endswith(".txt"):
-        raise HTTPException(status_code=400, detail="Only .txt files are supported.")
-
-    try:
-        content = await file.read()
-        query_text = content.decode('utf-8')
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Could not read file: {str(e)}")
-
-    if not query_text.strip():
-        raise HTTPException(status_code=400, detail="Uploaded .txt file is empty.")
+    # Check validity
+    allowed_extensions = ['.txt', '.pdf', '.docx', '.doc', '.md']
+    if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
+        return JSONResponse(
+            content={
+                "error": f"Only {', '.join(allowed_extensions)} files are supported."
+            },
+            status_code=400,
+        )
     
-    subset_docs, subset_names, _ = utils.perform_cluster(clf, query_text, tokenizer, c_model, clause_tags, umap_model, embed = True)
-    bow_results = utils.find_top_similar_bow(
-    target_doc=query_text,
-    documents=docs,
-    file_names=names,
-    similarity_threshold=0.1, k =20
-    )
+    content = await file.read()
+    
+    # Convert file to text
+    try:
+        query_text = utils.convert_file_to_text(content, file.filename)
+    except Exception as e:
+        return JSONResponse(
+            content={
+                "error": f"Error converting file to text: {str(e)}"
+            },
+            status_code=400,
+        )
+    
+    # Check if we have a cached embedding from process_contract
+    file_hash = hashlib.md5(content).hexdigest()
+    if file_hash in embedding_cache:
+        # Reuse the embedding from process_contract
+        query_embedding = embedding_cache[file_hash]['embedding']
+        # Clean up cache entry after use
+        del embedding_cache[file_hash]
+    else:
+        # Embed the query text (used by both perform_cluster and get_embedding_matches_subset)
+        query_embedding = utils.encode_text(query_text, tokenizer, c_model)
+    
+    subset_docs, subset_names, _ = utils.perform_cluster(clf, query_embedding, tokenizer, c_model, clause_tags, umap_model, embed = False)
+    bow_results = utils.find_top_similar_bow(target_doc=query_text, documents=docs, file_names=names, similarity_threshold=0.1, k =20)
     top_docs = bow_results["Documents"]
     top_names = bow_results["Top_Matches"]
-    top_names_bow, top_scores_bow, top_texts_bow = utils.get_embedding_matches_subset(
-        query_text,
-        top_docs,
-        top_names,
-        tokenizer,
-        c_model, k=5
-    )
+    top_names_bow, _, top_texts_bow = utils.get_embedding_matches_subset(query_embedding, top_docs, top_names, tokenizer, c_model, k=5)
     
     ## putting them into a shared dataframe 
     df_cluster = pd.DataFrame({
@@ -237,9 +299,8 @@ async def find_clauses(file: UploadFile = File(...)):
         "source_name": top_names_bow,
         "matched_by": ["bow"] * len(top_texts_bow)
     }).head(5)  # Top 5 from BOW
-
-    # Step 2: Combine (without deduplicating)
     combined_df = pd.concat([df_cluster, df_bow], ignore_index=True)
+    
     query_text_short = query_text[:1000]
     
     messages = [
@@ -252,38 +313,13 @@ async def find_clauses(file: UploadFile = File(...)):
         "content": f"Here's the contract:\n\n{query_text_short.strip()}\n\nI will send you some clauses next. For now, just confirm you have read the contract and are ready to receive the clauses. A short summary of the content of the contract would be fine."
     }
     ]
-    
-    # Check API key before making request
-    if not OPENROUTER_API_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail="OpenRouter API key not configured. Please set OPENROUTER_API_KEY environment variable."
-        )
-        
-    try:
-        response = client.chat.completions.create(
-            model=OPENROUTER_MODEL, 
-            messages= messages,
-            temperature=0,
-            max_tokens=1000
-        )
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
-            )
-        elif "404" in error_msg or "No endpoints found" in error_msg:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Model not found on OpenRouter. The model '{OPENROUTER_MODEL}' may not be available. Try setting OPENROUTER_MODEL environment variable to a different model. Error: {error_msg}"
-            )
-        else:
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenRouter API error: {error_msg}"
-            )
+
+    response = client.chat.completions.create(
+        model=OPENROUTER_MODEL, 
+        messages= messages,
+        temperature=0,
+        max_tokens=1000
+    )
 
     assistant_reply_1 = response.choices[0].message.content
     messages.append({"role": "assistant", "content": assistant_reply_1})
@@ -329,29 +365,11 @@ async def find_clauses(file: UploadFile = File(...)):
 
     messages.append({"role": "user", "content": clause_block})
 
-    try:
-        response = client.chat.completions.create(
-            model=OPENROUTER_MODEL,  
-            messages= messages,
-            temperature=0,
-        )
-    except Exception as e:
-        error_msg = str(e)
-        if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
-            )
-        elif "404" in error_msg or "No endpoints found" in error_msg:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Model not found on OpenRouter. The model '{OPENROUTER_MODEL}' may not be available. Try setting OPENROUTER_MODEL environment variable to a different model. Error: {error_msg}"
-            )
-        else:
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenRouter API error: {error_msg}"
-            )
+    response = client.chat.completions.create(
+        model=OPENROUTER_MODEL,  
+        messages= messages,
+        temperature=0,
+    )
 
     response_text = response.choices[0].message.content
     df_response = utils.parse_response(response_text)
@@ -360,8 +378,7 @@ async def find_clauses(file: UploadFile = File(...)):
     if df_response is None:
         print("Failed to parse LLM response, returning empty recommendations")
         return {
-            "matches": [],
-            "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
+            "matches": []
         }
     
     missing = []
@@ -387,29 +404,10 @@ async def find_clauses(file: UploadFile = File(...)):
         })
 
         # re-call the LLM
-        try:
-            retry = client.chat.completions.create(
-                model="qwen/qwen-2.5-7b-instruct:free",
-                messages=messages,
-                temperature=0,
-            )
-        except Exception as e:
-            error_msg = str(e)
-            if "401" in error_msg or "Unauthorized" in error_msg or "Invalid API key" in error_msg:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"OpenRouter API authentication failed. Please check your OPENROUTER_API_KEY. Error: {error_msg}"
-                )
-            elif "404" in error_msg or "No endpoints found" in error_msg:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Model not found on OpenRouter. The model 'qwen/qwen-2.5-7b-instruct:free' may not be available. Error: {error_msg}"
-                )
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"OpenRouter API error: {error_msg}"
-                )
+        retry = client.chat.completions.create(
+            model=DEFAULT_MODEL,
+            messages=messages,
+            temperature=0)
         response_text = retry.choices[0].message.content
         df_response = utils.parse_response(response_text)
         
@@ -417,117 +415,25 @@ async def find_clauses(file: UploadFile = File(...)):
         if df_response is None:
             print("Failed to parse retry LLM response, returning empty recommendations")
             return {
-                "matches": [],
-                "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
+                "matches": []
             }
         
     #find the clause names in the emission_df
     df_response = utils.get_emission_label(df_response, emission_df)
 
-    # Build matches with full text and excerpts
+    # Build matches
     matches = []
     for _, row in df_response.iterrows():
         clause_name = row["Clause Name"].replace(".txt", "")
-        
-        # Get the full clause text using get_clause
-        try:
-            clause_data = get_clause(clause_name)
-            full_text = clause_data["text"]
-            
-            # Extract first two sentences for excerpt
-            import re
-            sentences = re.split(r'[.!?]+', full_text.strip())
-            sentences = [s.strip() for s in sentences if s.strip()]
-            excerpt = '. '.join(sentences[:2]) + '.' if len(sentences) >= 2 else full_text[:200] + '...'
-            
-        except Exception as e:
-            print(f"Error getting clause text for {clause_name}: {e}")
-            full_text = "Clause text not available"
-            excerpt = "Clause text not available"
-        
-        # Handle the emissions_sources data structure
-        combined_labels = row.get("combined_labels")
-        if pd.notna(combined_labels):
-            try:
-                # Try to parse as JSON if it's a string
-                if isinstance(combined_labels, str):
-                    import json
-                    emissions_sources = json.loads(combined_labels)
-                elif isinstance(combined_labels, list):
-                    emissions_sources = combined_labels
-                else:
-                    emissions_sources = []
-            except (json.JSONDecodeError, TypeError):
-                emissions_sources = []
-        else:
-            emissions_sources = []
-        
-        # Get child name and URL from mappings
-        child_name = name_to_child.get(clause_name, "")
-        clause_url = name_to_url.get(clause_name, "")
-            
         matches.append({
             "name": clause_name,
-            "child_name": child_name,
-            "clause_url": clause_url,
+            "child_name": name_to_child.get(clause_name, ""),
+            "clause_url": name_to_url.get(clause_name, ""),
             "reason": row["Reasoning"],
-            "emissions_sources": emissions_sources,
-            "excerpt": excerpt,
-            "full_text": full_text
+            "emissions_sources": utils.parse_emissions_sources(row.get("combined_labels"))
         })
 
-    return {
-        "matches": matches,
-        "emissions_taxonomy_url": "/output/emissions_taxonomy.html"
-    }
-
-def normalize_title(s: str) -> str:
-    # 1) remove any parenthetical
-    s = re.sub(r"\(.*?\)", " ", s)
-    # 2) drop all punctuation
-    s = re.sub(r"[^\w\s]", " ", s)
-    # 3) lowercase & collapse whitespace
-    return re.sub(r"\s+", " ", s.lower()).strip()
-
-_normalized_map = {
-    normalize_title(full): full
-    for full in names
-}
-
-@app.get("/clause/{clause_name}")
-def get_clause(clause_name: str):
-    raw = unquote(clause_name)
-    norm_in = normalize_title(raw)
-
-    # exact normalized-match
-    if norm_in in _normalized_map:
-        full_title = _normalized_map[norm_in]
-
-    else:
-        # substring fallback
-        substrs = [full for k, full in _normalized_map.items() if norm_in in k]
-        if len(substrs) == 1:
-            full_title = substrs[0]
-        else:
-            # as last resort, fuzzy match on normalized keys
-            from difflib import get_close_matches
-            close = get_close_matches(norm_in, _normalized_map.keys(), n=1, cutoff=0.5)
-            if not close:
-                raise HTTPException(404, f"Clause '{raw}' not found")
-            full_title = _normalized_map[close[0]]
-
-    idx = names.index(full_title)
-    child_name = name_to_child.get(full_title, "")
-    return {"name": full_title, "text": docs[idx], "child_name": child_name}
-
-@app.get("/emission_taxonomy", response_class=HTMLResponse)
-async def serve_emission_taxonomy():
-    """
-    Return the emission taxonomy as an HTML table so the frontend can show it in a modal.
-    """
-    # emission_taxonomy is already loaded at startup
-    html = emission_taxonomy.to_html(index=False, classes="table table-sm")
-    return html
+    return {"matches": matches}
 
 # --- Serve Frontend ---
 @app.get("/", response_class=FileResponse)

@@ -138,12 +138,12 @@
                   <label class="govuk-label govuk-radios__label" for="Contract5">
                     <span>Upload your own contract</span>
                     <div id="Contract5-item-hint" class="govuk-hint govuk-radios__hint">
-                      <span><strong>Accepted files: </strong><br />TXT</span>
+                      <span><strong>Accepted files: </strong><br />TXT, PDF, DOCX, MD</span>
                       <span><strong>Max file size: </strong><br />10MB</span>
                     </div>
                   </label>
                   <div class="upload">
-                    <input id="file" class="upload__input" type="file" accept=".txt" />
+                    <input id="file" class="upload__input" type="file" accept=".txt,.pdf,.docx,.doc,.md,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/markdown" />
                     <label for="file" class="upload__btn">Choose file</label>
                     <span class="upload__filename" aria-live="polite"></span>
                   </div>
@@ -294,22 +294,23 @@
           } else {
             // No file uploaded and no sample selected
             hideLoadingScreen();
-            alert('Please upload a .txt file or choose a sample contract.');
+            alert('Please upload a file or choose a sample contract.');
             return;
           }
 
           // Validate file type
-          if (!fileToProcess.name.toLowerCase().endsWith('.txt')) {
+          const allowedExtensions = ['.txt', '.pdf', '.docx', '.doc', '.md'];
+          const fileExtension = '.' + fileToProcess.name.split('.').pop().toLowerCase();
+          if (!allowedExtensions.includes(fileExtension)) {
             hideLoadingScreen();
-            alert('Only .txt files are supported at the moment.');
+            alert(`Only ${allowedExtensions.join(', ')} files are supported.`);
             return;
           }
 
           // Single processing flow for both uploaded files and sample contracts
           try {
             const formData = new FormData();
-            formData.append('files', fileToProcess, fileToProcess.name);
-            formData.append('is_folder', 'false');
+            formData.append('file', fileToProcess, fileToProcess.name);
 
             const resp = await fetch('/process/', { method: 'POST', body: formData });
             if (!resp.ok) {
