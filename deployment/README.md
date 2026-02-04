@@ -12,9 +12,9 @@
 ### 1. Clone the repository
 
 ```bash
-sudo mkdir -p /app
-sudo chown $USER:$USER /app
-cd /app
+sudo mkdir -p /var/www/labs-apps/risk_id
+sudo chown $USER:$USER /var/www/labs-apps/risk_id
+cd /var/www/labs-apps/risk_id
 git clone <repository-url> .
 ```
 
@@ -72,7 +72,7 @@ server {
     # return 301 https://$server_name$request_uri;
 
     location /risk-id/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:3003;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -107,7 +107,7 @@ sudo systemctl reload nginx
 ### Update the application
 
 ```bash
-cd /app
+cd /var/www/labs-apps/risk_id
 git pull
 poetry install --no-dev
 sudo systemctl restart tclp-risk-id

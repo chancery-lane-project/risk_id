@@ -6,12 +6,12 @@ After=network.target
 Type=notify
 User=www-data
 Group=www-data
-WorkingDirectory=/app
-EnvironmentFile=/app/.env
+WorkingDirectory=/var/www/labs-apps/risk_id
+EnvironmentFile=/var/www/labs-apps/risk_id/.env
 
 # Install dependencies and start gunicorn
 ExecStartPre=/usr/local/bin/poetry install --no-dev
-ExecStart=/usr/local/bin/poetry run gunicorn -c /app/gunicorn.conf.py tclp.app:app
+ExecStart=/usr/local/bin/poetry run gunicorn -c /var/www/labs-apps/risk_id/gunicorn.conf.py tclp.app:app
 
 # Restart policy
 Restart=always

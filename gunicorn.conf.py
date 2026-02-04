@@ -14,7 +14,7 @@ import os
 BASE_PATH = os.getenv("BASE_PATH", "").rstrip("/")
 
 # Server socket
-bind = "0.0.0.0:8000"
+bind = "0.0.0.0:3003"
 backlog = 2048
 
 # Worker processes
