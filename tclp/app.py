@@ -24,7 +24,6 @@ from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 
 app = FastAPI(
-    root_path=BASE_PATH,
     title="TCLP Risk ID API",
     description="Contract Climate Risk Identification API"
 )
