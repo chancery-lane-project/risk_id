@@ -1,0 +1,29 @@
+[Unit]
+Description=TCLP Risk ID - Contract Climate Risk Identification Service
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/app
+EnvironmentFile=/app/.env
+
+# Install dependencies and start gunicorn
+ExecStartPre=/usr/local/bin/poetry install --no-dev
+ExecStart=/usr/local/bin/poetry run gunicorn -c /app/gunicorn.conf.py tclp.app:app
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tclp-risk-id
+
+[Install]
+WantedBy=multi-user.target
