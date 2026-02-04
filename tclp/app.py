@@ -59,13 +59,13 @@ CLUSTERING_MODEL = os.path.join(BASE_DIR, 'models', 'clustering_model.pkl')
 UMAP_MODEL = os.path.join(BASE_DIR, 'models', 'umap_model.pkl')
 
 app.mount(
-    f"{BASE_PATH}/assets",
+    "/assets",
     StaticFiles(directory=os.path.join(BASE_DIR, "provocotype-1", "assets")),
     name="assets",
 )
 
 os.makedirs(output_dir, exist_ok=True)
-app.mount(f"{BASE_PATH}/output", StaticFiles(directory=output_dir), name="output")
+app.mount("/output", StaticFiles(directory=output_dir), name="output")
 
 print("[INFO] Loading model and data...")
 tokenizer, d_model, c_model, names, docs, final_df, child_names, name_to_child, name_to_url = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
