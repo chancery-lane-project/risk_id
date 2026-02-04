@@ -17,13 +17,11 @@ import joblib
 import pandas as pd
 import torch
 import utils
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 app = FastAPI(
     root_path=BASE_PATH,
@@ -44,22 +42,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-security = HTTPBasic()
-
-# Dummy credentials for demonstration purposes
-USERNAME = "father"
-PASSWORD = "christmas"
-
-def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = credentials.username == USERNAME
-    correct_password = credentials.password == PASSWORD
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
 
 # Absolute paths for directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -444,20 +426,20 @@ async def find_clauses(file: UploadFile = File(...)):
 
 # --- Serve Frontend ---
 @app.get("/", response_class=FileResponse)
-def read_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+def read_root():
     if not os.path.exists(INDEX_PATH):
         raise RuntimeError(f"{INDEX_PATH} not found")
     return FileResponse(INDEX_PATH, media_type="text/html")
 
 # Optional: serve the secondary frontend directly
 @app.get("/index2.htm", response_class=FileResponse)
-def read_index2_htm(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+def read_index2_htm():
     if not os.path.exists(ALT_INDEX_PATH):
         raise RuntimeError(f"{ALT_INDEX_PATH} not found")
     return FileResponse(ALT_INDEX_PATH, media_type="text/html")
 
 @app.get("/index2", response_class=FileResponse)
-def read_index2(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
+def read_index2():
     if not os.path.exists(ALT_INDEX_PATH):
         raise RuntimeError(f"{ALT_INDEX_PATH} not found")
     return FileResponse(ALT_INDEX_PATH, media_type="text/html")
