@@ -4,14 +4,17 @@ import pickle
 import shutil
 import time
 
-# Suppress tokenizers parallelism warning
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# Load environment variables first
+from dotenv import load_dotenv
+load_dotenv()
+
+# Suppress tokenizers parallelism warning - read from env
+os.environ["TOKENIZERS_PARALLELISM"] = os.getenv("TOKENIZERS_PARALLELISM", "false")
 
 import joblib
 import pandas as pd
 import torch
 import utils
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -19,8 +22,6 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from starlette.status import HTTP_401_UNAUTHORIZED
-
-load_dotenv()
 
 app = FastAPI()
 CAT0 = "unlikely"
