@@ -108,7 +108,14 @@ Before running the application, you need to download and set up the required dat
 
 ### Running the Application
 
-1. **Start the FastAPI Backend:**
+1. **Configure environment:**
+
+```bash
+cp .env.template .env
+nano .env  # Update OPENROUTER_API_KEY and other variables
+```
+
+2. **Start the FastAPI Backend:**
 
 ```bash
 poetry run uvicorn tclp.app:app --host 0.0.0.0 --port 8000
@@ -120,22 +127,27 @@ This will:
 - Provide API endpoints for contract analysis and clause recommendations.  
 - Serve the frontend files from `tclp/provocotype-1/`.
 
-2. **Access the Frontend:**
+3. **Access the Frontend:**
 
 Once the server is running, open your web browser and navigate to:
 ```
-http://localhost:8000/tclp/provocotype-1/index.htm
+http://localhost:8000/
 ```
 
 The frontend will:
-- Allow you to upload a `.txt` contract file
+- Allow you to upload a contract file (`.txt`, `.pdf`, `.docx`, `.doc`, `.md`)
 - Process the contract in real-time using the backend API
 - Display analysis results including climate risk classification, recommended clauses, and emissions impact
 - Show highlighted contract text with climate-aligned language identified
 
-**Note:** You'll need to set up environment variables for the OpenRouter API:
-- `OPENROUTER_API_KEY`: Your OpenRouter API key
-- `OPENROUTER_MODEL`: The model to use (defaults to the value of `DEFAULT_MODEL` in `app.py`, currently `tngtech/deepseek-r1t2-chimera:free`)
+### Environment Variables
+
+All configuration is managed through environment variables (see `.env.template`):
+
+- `OPENROUTER_API_KEY`: Required for clause recommendations
+- `OPENROUTER_MODEL`: LLM model to use (default: `tngtech/deepseek-r1t2-chimera:free`)
+- `BASE_PATH`: Subfolder deployment path (e.g., `/risk-id` for serving at `/risk-id/`)
+- `TOKENIZERS_PARALLELISM`: Suppress tokenizer warnings (default: `false`)
 
 ---
 
@@ -207,6 +219,30 @@ It's important to note the following constraints of this prototype:
    - Whether the suggestions feel relevant and useful.  
    - How confident you feel in the recommendations compared to manual searching.  
    - What would make the tool more practical for your work.  
+
+---
+
+## Production Deployment
+
+For production deployment with gunicorn and systemd, see [deployment/README.md](deployment/README.md).
+
+### Quick Start (Production)
+
+```bash
+# Configure environment
+cp .env.template .env
+nano .env  # Update all variables
+
+# Install dependencies
+poetry install --no-dev
+
+# Run with gunicorn
+poetry run gunicorn -c gunicorn.conf.py tclp.app:app
+```
+
+### Systemd Service
+
+See [deployment/README.md](deployment/README.md) for systemd service installation and configuration.
 
 ---
 
