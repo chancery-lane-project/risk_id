@@ -8,6 +8,8 @@ import time
 from dotenv import load_dotenv
 load_dotenv()
 
+BASE_PATH = os.getenv("BASE_PATH", "").rstrip("/")
+
 # Suppress tokenizers parallelism warning - read from env
 os.environ["TOKENIZERS_PARALLELISM"] = os.getenv("TOKENIZERS_PARALLELISM", "false")
 
@@ -23,7 +25,11 @@ from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-app = FastAPI()
+app = FastAPI(
+    root_path=BASE_PATH,
+    title="TCLP Risk ID API",
+    description="Contract Climate Risk Identification API"
+)
 CAT0 = "unlikely"
 CAT1 = "possible"
 CAT2 = "likely"
@@ -71,13 +77,13 @@ CLUSTERING_MODEL = os.path.join(BASE_DIR, 'models', 'clustering_model.pkl')
 UMAP_MODEL = os.path.join(BASE_DIR, 'models', 'umap_model.pkl')
 
 app.mount(
-    "/assets",
+    f"{BASE_PATH}/assets",
     StaticFiles(directory=os.path.join(BASE_DIR, "provocotype-1", "assets")),
     name="assets",
 )
 
 os.makedirs(output_dir, exist_ok=True)
-app.mount("/output", StaticFiles(directory=output_dir), name="output")
+app.mount(f"{BASE_PATH}/output", StaticFiles(directory=output_dir), name="output")
 
 print("[INFO] Loading model and data...")
 tokenizer, d_model, c_model, names, docs, final_df, child_names, name_to_child, name_to_url = utils.getting_started(MODEL_PATH, CLAUSE_FOLDER, CLAUSE_HTML)
