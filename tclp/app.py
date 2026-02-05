@@ -17,7 +17,8 @@ import joblib
 import pandas as pd
 import torch
 import utils
-from fastapi import FastAPI, File, HTTPException, UploadFile
+import task_manager
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -79,6 +80,11 @@ device = torch.device("cpu")
 # This allows process_contract and find_clauses to share embeddings
 embedding_cache = {}
 
+# Initialize task database
+print("[INFO] Initializing task database...")
+task_manager.init_db()
+print("[INFO] Task database ready")
+
 # --- OpenAI / OpenRouter Setup ---
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL)  
@@ -93,17 +99,12 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1")
 
 @app.post("/process/")
-async def process_contract(file: UploadFile):
+async def process_contract(file: UploadFile, background_tasks: BackgroundTasks):
     """
-    Endpoint to process a contract file or folder.
+    Endpoint to process a contract file.
+    Returns immediately with a task_id for polling.
     """
-    # Cleanup and recreate temp directories
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-    os.makedirs(temp_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Check validity and open file
+    # Check validity
     allowed_extensions = ['.txt', '.pdf', '.docx', '.doc', '.md']
     if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
         return JSONResponse(
@@ -113,125 +114,61 @@ async def process_contract(file: UploadFile):
             status_code=400,
         )
 
-    # Read file content once
+    # Read file content
     file_content = await file.read()
-    
-    # Save original file first (for MarkItDown to process)
-    original_file_path = os.path.join(temp_dir, file.filename)
-    with open(original_file_path, "wb") as f:
-        f.write(file_content)
-    
-    # Convert file to text for processing
-    try:
-        full_contract_text = utils.convert_file_to_text(file_content, file.filename)
-    except Exception as e:
-        return JSONResponse(
-            content={
-                "error": f"Error converting file to text: {str(e)}"
-            },
-            status_code=400,
-        )
-    
-    # Save as .txt file for load_unlabelled_contract to process
-    base_filename = os.path.splitext(file.filename)[0]
-    txt_filename = f"{base_filename}.txt"
-    txt_file_path = os.path.join(temp_dir, txt_filename)
-    with open(txt_file_path, "w", encoding="utf-8") as f:
-        f.write(full_contract_text)
-    
-    # Convert to markdown using MarkItDown for display
-    markdown_content = None
-    try:
-        from markitdown import MarkItDown
-        
-        # MarkItDown needs a file path - use the original file we saved
-        md = MarkItDown()
-        result = md.convert(original_file_path)
-        
-        # MarkItDown returns a ConvertResult object with .text_content attribute
-        if result and hasattr(result, 'text_content'):
-            markdown_content = result.text_content
-        elif result and hasattr(result, 'markdown'):
-            markdown_content = result.markdown
-        elif result:
-            markdown_content = str(result)
-            if markdown_content == "None" or not markdown_content.strip():
-                markdown_content = None
-        
-        # Validate we got actual content
-        if not markdown_content or str(markdown_content).strip() == "":
-            markdown_content = None
-    except Exception as e:
-        print(f"Warning: MarkItDown conversion failed: {str(e)}")
-        markdown_content = None
-    # Embed the full contract text once (will be reused by find_clauses)
-    # Cache it using file content hash as key
-    file_hash = hashlib.md5(file_content).hexdigest()
-    full_contract_embedding = utils.encode_text(full_contract_text, tokenizer, c_model)
-    embedding_cache[file_hash] = {
-        'embedding': full_contract_embedding,
-        'text': full_contract_text
-    }
 
-    processed_contracts = utils.load_unlabelled_contract(temp_dir)
-    texts = processed_contracts["text"].tolist()
+    # Create task
+    task_id = task_manager.create_task()
+    print(f"[INFO] Created task {task_id} for file: {file.filename}")
 
-    # Model predictions
-    results, _ = utils.predict_climatebert(texts, tokenizer, device, d_model)
-    result_df, _ = utils.create_result_df(results, processed_contracts)
-    
-    # Extract sentences that should be highlighted (prediction=1 or keyword_match)
-    highlighted_sentences = result_df[
-        (result_df['prediction'] == 1) | result_df['contains_climate_keyword']
-    ]['sentence'].tolist()
-    
-    # Render document: use markdown if available, otherwise fallback to txt highlighting
-    if markdown_content and str(markdown_content).strip():
-        try:
-            highlighted_output = utils.render_markdown_with_highlights(
-                markdown_content,
-                full_contract_text,
-                highlighted_sentences
-            )
-        except Exception as e:
-            print(f"Warning: MarkItDown rendering failed: {str(e)}. Using fallback method.")
-            highlighted_output = utils.highlight_climate_content(result_df)
-    else:
-        highlighted_output = utils.highlight_climate_content(result_df)
-    
-    # Save into output directory with timestamp
-    timestamp = int(time.time())
-    filename = f"highlighted_output_{timestamp}.html"
-    filepath = os.path.join(output_dir, filename)
-    utils.save_file(filepath, highlighted_output)
-    print(f"Saved highlighted output to: {filepath}")
-
-    contract_df = utils.create_contract_df(
-        result_df, processed_contracts, labelled=False
+    # Start background processing
+    import background_tasks as bg_tasks
+    background_tasks.add_task(
+        bg_tasks.process_contract_task,
+        task_id=task_id,
+        file_content=file_content,
+        filename=file.filename,
+        temp_dir=temp_dir,
+        output_dir=output_dir,
+        tokenizer=tokenizer,
+        d_model=d_model,
+        c_model=c_model,
+        embedding_cache=embedding_cache,
+        CAT0=CAT0,
+        CAT1=CAT1,
+        CAT2=CAT2,
+        CAT3=CAT3
     )
 
-    zero, one, two, three = utils.create_threshold_buckets(contract_df)
+    return {"task_id": task_id, "status": "processing"}
 
-    result = utils.print_single(
-        zero, one, two, three, return_result=True
-    )
+@app.get("/task/{task_id}")
+def get_task_status(task_id: str):
+    """
+    Get the status of a background task.
+    Returns task status, progress, and result (if completed).
+    """
+    task = task_manager.get_task(task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Return task info
     response = {
-        "classification": result,
-        "highlighted_output_url": f"output/{filename}",
-        "bucket_labels": {
-            "cat0": CAT0,
-            "cat1": CAT1,
-            "cat2": CAT2,
-            "cat3": CAT3
-        }
+        "task_id": task_id,
+        "status": task["status"],
+        "progress": task.get("progress", 0),
+        "created_at": task["created_at"],
+        "updated_at": task["updated_at"]
     }
 
-    # Cleanup
-    shutil.rmtree(temp_dir, ignore_errors=True)
-    os.makedirs(
-        output_dir, exist_ok=True
-    )  # Recreate the output directory after cleanup
-    return JSONResponse(content=response)
+    if task["status"] == "completed":
+        response["result"] = task["result"]
+    elif task["status"] == "failed":
+        response["error"] = task["error"]
+
+    return response
+
 
 @app.post("/find_clauses/")
 async def find_clauses(file: UploadFile = File(...)):

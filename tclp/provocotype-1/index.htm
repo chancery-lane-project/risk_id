@@ -312,50 +312,78 @@
             const formData = new FormData();
             formData.append('file', fileToProcess, fileToProcess.name);
 
+            // Submit and get task ID
             const resp = await fetch('process/', { method: 'POST', body: formData });
             if (!resp.ok) {
               const errTxt = await resp.text();
               throw new Error(errTxt || 'Request failed');
             }
-            const data = await resp.json();
+            const { task_id } = await resp.json();
+            console.log('Processing task ID:', task_id);
 
-            // Call /find_clauses/ endpoint
-            let recommendResult = null;
-            try {
-              const clauseFormData = new FormData();
-              clauseFormData.append('file', fileToProcess, fileToProcess.name);
-              const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
-              console.log('Clause response status:', clauseResp.status);
-              if (clauseResp.ok) {
-                const responseText = await clauseResp.text();
-                console.log('Clause response body:', responseText);
-                recommendResult = JSON.parse(responseText);
-                console.log('Parsed recommendResult:', recommendResult);
-              } else {
-                const errTxt = await clauseResp.text();
-                console.error('Clause detection failed:', errTxt);
-                throw new Error(errTxt || 'Clause detection failed');
+            // Poll for completion
+            const pollTask = async () => {
+              const statusResp = await fetch(`task/${task_id}`);
+              if (!statusResp.ok) {
+                throw new Error('Failed to check task status');
               }
-            } catch (e) {
-              console.error('Error in find_clauses:', e);
-              recommendResult = null;
-            }
+              const taskStatus = await statusResp.json();
+              console.log('Task status:', taskStatus.status, 'Progress:', taskStatus.progress);
 
-            // Store results in sessionStorage
-            try {
-              sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
-            } catch (e) {
-            }
+              if (taskStatus.status === 'completed') {
+                // Processing complete - use the result
+                const data = taskStatus.result;
+                console.log('Processing completed:', data);
 
-            try {
-              sessionStorage.setItem('processResult', JSON.stringify(data));
-              sessionStorage.setItem('contractName', displayName);
-            } catch (e) {
-              console.error('Error storing processResult:', e);
-            }
+                // Call /find_clauses/ endpoint
+                let recommendResult = null;
+                try {
+                  const clauseFormData = new FormData();
+                  clauseFormData.append('file', fileToProcess, fileToProcess.name);
+                  const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
+                  console.log('Clause response status:', clauseResp.status);
+                  if (clauseResp.ok) {
+                    const responseText = await clauseResp.text();
+                    console.log('Clause response body:', responseText);
+                    recommendResult = JSON.parse(responseText);
+                    console.log('Parsed recommendResult:', recommendResult);
+                  } else {
+                    const errTxt = await clauseResp.text();
+                    console.error('Clause detection failed:', errTxt);
+                    throw new Error(errTxt || 'Clause detection failed');
+                  }
+                } catch (e) {
+                  console.error('Error in find_clauses:', e);
+                  recommendResult = null;
+                }
 
-            // Navigate to report page (loading screen will be hidden on navigation)
-            window.location.href = 'index2.htm';
+                // Store results in sessionStorage
+                try {
+                  sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
+                } catch (e) {
+                }
+
+                try {
+                  sessionStorage.setItem('processResult', JSON.stringify(data));
+                  sessionStorage.setItem('contractName', displayName);
+                } catch (e) {
+                  console.error('Error storing processResult:', e);
+                }
+
+                // Navigate to report page (loading screen will be hidden on navigation)
+                window.location.href = 'index2.htm';
+
+              } else if (taskStatus.status === 'failed') {
+                throw new Error(taskStatus.error || 'Processing failed');
+              } else {
+                // Still processing - poll again in 2 seconds
+                setTimeout(pollTask, 2000);
+              }
+            };
+
+            // Start polling
+            await pollTask();
+
           } catch (err) {
             console.error('Error in form submission:', err);
             hideLoadingScreen();
