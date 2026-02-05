@@ -171,7 +171,11 @@ def get_task_status(task_id: str):
 
 
 @app.post("/find_clauses/")
-async def find_clauses(file: UploadFile = File(...)):
+async def find_clauses(file: UploadFile, background_tasks: BackgroundTasks):
+    """
+    Endpoint to find matching clauses for a contract.
+    Returns immediately with a task_id for polling.
+    """
     # Check validity
     allowed_extensions = ['.txt', '.pdf', '.docx', '.doc', '.md']
     if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
@@ -181,188 +185,38 @@ async def find_clauses(file: UploadFile = File(...)):
             },
             status_code=400,
         )
-    
+
+    # Read file content
     content = await file.read()
-    
-    # Convert file to text
-    try:
-        query_text = utils.convert_file_to_text(content, file.filename)
-    except Exception as e:
-        return JSONResponse(
-            content={
-                "error": f"Error converting file to text: {str(e)}"
-            },
-            status_code=400,
-        )
-    
-    # Check if we have a cached embedding from process_contract
-    file_hash = hashlib.md5(content).hexdigest()
-    if file_hash in embedding_cache:
-        # Reuse the embedding from process_contract
-        query_embedding = embedding_cache[file_hash]['embedding']
-        # Clean up cache entry after use
-        del embedding_cache[file_hash]
-    else:
-        # Embed the query text (used by both perform_cluster and get_embedding_matches_subset)
-        query_embedding = utils.encode_text(query_text, tokenizer, c_model)
-    
-    subset_docs, subset_names, _ = utils.perform_cluster(clf, query_embedding, tokenizer, c_model, clause_tags, umap_model, embed = False)
-    bow_results = utils.find_top_similar_bow(target_doc=query_text, documents=docs, file_names=names, similarity_threshold=0.1, k =20)
-    top_docs = bow_results["Documents"]
-    top_names = bow_results["Top_Matches"]
-    top_names_bow, _, top_texts_bow = utils.get_embedding_matches_subset(query_embedding, top_docs, top_names, tokenizer, c_model, k=5)
-    
-    ## putting them into a shared dataframe 
-    df_cluster = pd.DataFrame({
-        "text": subset_docs,
-        "source_name": subset_names,
-        "matched_by": ["cluster"] * len(subset_names)
-    })
 
-    df_bow = pd.DataFrame({
-        "text": top_texts_bow,
-        "source_name": top_names_bow,
-        "matched_by": ["bow"] * len(top_texts_bow)
-    }).head(5)  # Top 5 from BOW
-    combined_df = pd.concat([df_cluster, df_bow], ignore_index=True)
-    
-    query_text_short = query_text[:1000]
-    
-    messages = [
-    {
-        "role": "system",
-        "content": "You are a legal AI assistant that helps review and select climate-aligned clauses for the uploaded document. You can only select from those clauses provided to you. We are trying to help the writers of the document integrate climate-aligned language."
-    },
-    {
-        "role": "user",
-        "content": f"Here's the contract:\n\n{query_text_short.strip()}\n\nI will send you some clauses next. For now, just confirm you have read the contract and are ready to receive the clauses. A short summary of the content of the contract would be fine."
-    }
-    ]
+    # Create task
+    task_id = task_manager.create_task()
+    print(f"[INFO] Created find_clauses task {task_id} for file: {file.filename}")
 
-    response = client.chat.completions.create(
-        model=OPENROUTER_MODEL, 
-        messages= messages,
-        temperature=0,
-        max_tokens=1000
+    # Start background processing
+    import background_tasks as bg_tasks
+    background_tasks.add_task(
+        bg_tasks.find_clauses_task,
+        task_id=task_id,
+        file_content=content,
+        filename=file.filename,
+        tokenizer=tokenizer,
+        c_model=c_model,
+        clause_tags=clause_tags,
+        clf=clf,
+        umap_model=umap_model,
+        docs=docs,
+        names=names,
+        name_to_child=name_to_child,
+        name_to_url=name_to_url,
+        emission_df=emission_df,
+        client=client,
+        OPENROUTER_MODEL=OPENROUTER_MODEL,
+        DEFAULT_MODEL=DEFAULT_MODEL
     )
 
-    assistant_reply_1 = response.choices[0].message.content
-    messages.append({"role": "assistant", "content": assistant_reply_1})
+    return {"task_id": task_id, "status": "processing"}
 
-    clause_block = "Here are the clauses:\n\n"
-
-    for i, row in combined_df.iterrows():
-        clause_block += (
-            f"Clause {i+1}\n"
-            f"Name: {row['source_name']}\n"
-            f"Method: {row['matched_by']}\n"
-            f"Full Text:\n{row['text']}\n\n"
-        )
-
-    clause_block += '''Select the clauses from the list that best align with the contract. 
-    It is really important that you answer this consistently and the same way every time. If I upload the same contract against, I expect to see the same answer. 
-    
-    This is a two step process. 
-    
-    Step 1: Binary select the clauses that are a good fit for the contract. Go through one by one and remember which ones you selected as a potential fit. As a rule of thumb, give no fewer than 3 and no more than 7. If there is good reason, you can do fewer or more.
-    Step 2: Go through those that you have selected as a fit and provide reasoning. Feel free to reconsider whether they are a fit once you go through them again. 
-    
-    Before you being, read the rules below. They should guide you on both steps. 
-    
-    Follow these rules:
-
-    1. Your response must be a JSON of exactly as many objects as there are clauses you have selected as a fit, each with the keys "Clause Name" and "Reasoning".
-    3. Only select from the clauses provided — do not invent new ones.
-    4. Remember the contract’s **content and purpose**. Their goal is likely not to reduce their emissions, but to meet other business or legal needs. We are telling them where they can inject climate-aligned language into the existing contract but the existing contract and its goals are the most important consideration.
-    5. Pay close attention to what the contract is **doing** — the transaction type, structure, and key obligations — not just who the parties are or what sector they operate in.
-    - Clauses must fit the **actual function and scope** of the contract.
-    - For example, do not recommend a clause about land access if the contract is about software licensing.
-    - Another example: do not recommend a clause about insurance if the contract is establishing a joint venture.
-    6. Consider the relationship between the parties (e.g. supplier–customer, insurer–insured, JV partners).
-    - If a clause assumes a different relationship, only suggest it if it can **realistically be adapted**, and explain how.
-    7. You may include a clause that is not a perfect match if:
-    - It serves a similar **legal or operational function**, and
-    - You clearly explain how it could be adapted to the contract context.
-    8. Do not recommend clauses that clearly mismatch the contract’s type, scope, or parties.
-    9. Avoid redundancy. If the contract already addresses a topic (e.g. dispute resolution), only suggest a clause on that topic if it adds clear value.
-
-    Focus on legal function, contextual fit, and the actual mechanics of the contract. You are recommending **starting points** — plausible clauses the user could adapt.'''
-
-    messages.append({"role": "user", "content": clause_block})
-
-    response = client.chat.completions.create(
-        model=OPENROUTER_MODEL,  
-        messages= messages,
-        temperature=0,
-    )
-
-    response_text = response.choices[0].message.content
-    df_response = utils.parse_response(response_text)
-    
-    # Check if parsing was successful
-    if df_response is None:
-        print("Failed to parse LLM response, returning empty recommendations")
-        return {
-            "matches": []
-        }
-    
-    missing = []
-    for clause in df_response["Clause Name"]:
-        target = clause + ".txt"
-        # try to find at least one close match in your names list
-        close = utils.get_close_matches(target, names, n=1, cutoff=0.8)
-        if not close:
-            missing.append(clause)
-            
-    if missing:
-        print(f"[WARNING] Clauses not found: {missing}")
-        # tack on the assistant’s bad output, then our correction prompt
-        messages.append({"role":"assistant","content":response_text})
-        messages.append({
-            "role":"user",
-            "content": (
-                "One of the clauses you recommended "
-                f"({', '.join(missing)}) was not in the provided set. "
-                "Do not hallucinate: only pick from the list I gave you, "
-                "and please try again."
-            )
-        })
-
-        # re-call the LLM
-        retry = client.chat.completions.create(
-            model=DEFAULT_MODEL,
-            messages=messages,
-            temperature=0)
-        response_text = retry.choices[0].message.content
-        df_response = utils.parse_response(response_text)
-        
-        # Check if retry parsing was successful
-        if df_response is None:
-            print("Failed to parse retry LLM response, returning empty recommendations")
-            return {
-                "matches": []
-            }
-        
-    #find the clause names in the emission_df
-    df_response = utils.get_emission_label(df_response, emission_df)
-
-    # Build matches
-    matches = []
-    for _, row in df_response.iterrows():
-        clause_name = row["Clause Name"].replace(".txt", "")
-        matches.append({
-            "name": clause_name,
-            "child_name": name_to_child.get(clause_name, ""),
-            "clause_url": name_to_url.get(clause_name, ""),
-            "reason": row["Reasoning"],
-            "emissions_sources": utils.parse_emissions_sources(row.get("combined_labels"))
-        })
-
-    print(f"[INFO] Returning {len(matches)} clause matches")
-    print(f"[DEBUG] Matches data: {matches}")
-    return {"matches": matches}
-
-# --- Serve Frontend ---
 @app.get("/", response_class=FileResponse)
 def read_root():
     if not os.path.exists(INDEX_PATH):

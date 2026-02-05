@@ -335,23 +335,50 @@
                 const data = taskStatus.result;
                 console.log('Processing completed:', data);
 
-                // Call /find_clauses/ endpoint
+                // Call /find_clauses/ endpoint with async polling
                 let recommendResult = null;
                 try {
                   const clauseFormData = new FormData();
                   clauseFormData.append('file', fileToProcess, fileToProcess.name);
+                  
+                  // Submit and get task ID
                   const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
                   console.log('Clause response status:', clauseResp.status);
-                  if (clauseResp.ok) {
-                    const responseText = await clauseResp.text();
-                    console.log('Clause response body:', responseText);
-                    recommendResult = JSON.parse(responseText);
-                    console.log('Parsed recommendResult:', recommendResult);
-                  } else {
+                  
+                  if (!clauseResp.ok) {
                     const errTxt = await clauseResp.text();
                     console.error('Clause detection failed:', errTxt);
                     throw new Error(errTxt || 'Clause detection failed');
                   }
+                  
+                  const { task_id: clauseTaskId } = await clauseResp.json();
+                  console.log('Clause task ID:', clauseTaskId);
+                  
+                  // Poll for clause results
+                  const pollClauseTask = async () => {
+                    const statusResp = await fetch(`task/${clauseTaskId}`);
+                    if (!statusResp.ok) {
+                      throw new Error('Failed to check clause task status');
+                    }
+                    const taskStatus = await statusResp.json();
+                    console.log('Clause task status:', taskStatus.status, 'Progress:', taskStatus.progress);
+                    
+                    if (taskStatus.status === 'completed') {
+                      recommendResult = taskStatus.result;
+                      console.log('Clause detection completed:', recommendResult);
+                      return; // Exit polling
+                    } else if (taskStatus.status === 'failed') {
+                      throw new Error(taskStatus.error || 'Clause detection failed');
+                    } else {
+                      // Still processing - poll again in 2 seconds
+                      await new Promise(resolve => setTimeout(resolve, 2000));
+                      await pollClauseTask(); // Continue polling
+                    }
+                  };
+                  
+                  // Start polling and wait for completion
+                  await pollClauseTask();
+                  
                 } catch (e) {
                   console.error('Error in find_clauses:', e);
                   recommendResult = null;
