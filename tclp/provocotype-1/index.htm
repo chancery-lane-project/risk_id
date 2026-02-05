@@ -357,9 +357,11 @@
                   recommendResult = null;
                 }
 
-                // Store results in sessionStorage
+                // Store results in sessionStorage (only if not null)
                 try {
-                  sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
+                  if (recommendResult) {
+                    sessionStorage.setItem('recommendResult', JSON.stringify(recommendResult));
+                  }
                 } catch (e) {
                 }
 

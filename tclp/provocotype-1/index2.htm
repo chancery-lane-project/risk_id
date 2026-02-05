@@ -294,7 +294,8 @@
           const data = JSON.parse(raw);
           const list = document.getElementById('recommendation-list');
 
-          if (list && data.matches && data.matches.length > 0) {
+          // Check if data exists and is not null
+          if (list && data && data.matches && data.matches.length > 0) {
             // Clear any existing content and replace with real recommendations
             list.innerHTML = '';
 
