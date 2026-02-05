@@ -31,17 +31,19 @@
         <div class="loading-content-wrap" id="state-1">
           <span class="spinner"><img src="assets/img/loading-state-1.gif" /></span>
           <p><strong>Analysing contract</strong><p>
-          <p>Scanning structure, text and metadata</p>
+          <p id="progress-text-1">Scanning structure, text and metadata</p>
+          <p id="progress-percent-1" style="font-size: 2em; font-weight: bold; margin-top: 10px;">0%</p>
         </div>
         <div class="loading-content-wrap" id="state-2">
           <span class="spinner"><img src="assets/img/loading-state-2.gif" /></span>
           <p><strong>Finding relevant clauses</strong><p>
-          <p>Matching content to legal topics</p>
+          <p id="progress-text-2">Matching content to legal topics</p>
+          <p id="progress-percent-2" style="font-size: 2em; font-weight: bold; margin-top: 10px;">0%</p>
         </div>
         <div class="loading-content-wrap" id="state-3">
           <span class="spinner"><img src="assets/img/loading-state-3.gif" /></span>
           <p><strong>Preparing report</strong><p>
-          <p>Ranking insights and formatting your summary</p>
+          <p id="progress-text-3">Ranking insights and formatting your summary</p>
         </div>
       </div>
     </div>
@@ -204,7 +206,8 @@
       function showLoadingScreen() {
         if (loadingScreen) {
           loadingScreen.classList.add('active');
-          startLoadingStates();
+          // Start with state-1 active, don't auto-cycle
+          showLoadingState(1);
         }
       }
 
@@ -215,6 +218,26 @@
             clearInterval(loadingInterval);
             loadingInterval = null;
           }
+        }
+      }
+
+      function showLoadingState(stateNum) {
+        const states = document.querySelectorAll('.loading-content-wrap');
+        if (!states.length) return;
+
+        // Stop any cycling
+        if (loadingInterval) {
+          clearInterval(loadingInterval);
+          loadingInterval = null;
+        }
+
+        // Remove active from all states
+        states.forEach(s => s.classList.remove('active', 'fade-out'));
+
+        // Show the requested state
+        const stateEl = document.getElementById(`state-${stateNum}`);
+        if (stateEl) {
+          stateEl.classList.add('active');
         }
       }
 
@@ -330,17 +353,26 @@
               const taskStatus = await statusResp.json();
               console.log('Task status:', taskStatus.status, 'Progress:', taskStatus.progress);
 
+              // Update progress display for process task
+              const progressEl = document.getElementById('progress-percent-1');
+              if (progressEl && taskStatus.progress !== undefined) {
+                progressEl.textContent = `${taskStatus.progress}%`;
+              }
+
               if (taskStatus.status === 'completed') {
                 // Processing complete - use the result
                 const data = taskStatus.result;
                 console.log('Processing completed:', data);
+
+                // Switch to state-2 (finding clauses)
+                showLoadingState(2);
 
                 // Call /find_clauses/ endpoint with async polling
                 let recommendResult = null;
                 try {
                   const clauseFormData = new FormData();
                   clauseFormData.append('file', fileToProcess, fileToProcess.name);
-                  
+
                   // Submit and get task ID
                   const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
                   console.log('Clause response status:', clauseResp.status);
@@ -362,7 +394,13 @@
                     }
                     const taskStatus = await statusResp.json();
                     console.log('Clause task status:', taskStatus.status, 'Progress:', taskStatus.progress);
-                    
+
+                    // Update progress display for clause task
+                    const progressEl = document.getElementById('progress-percent-2');
+                    if (progressEl && taskStatus.progress !== undefined) {
+                      progressEl.textContent = `${taskStatus.progress}%`;
+                    }
+
                     if (taskStatus.status === 'completed') {
                       recommendResult = taskStatus.result;
                       console.log('Clause detection completed:', recommendResult);
@@ -383,6 +421,9 @@
                   console.error('Error in find_clauses:', e);
                   recommendResult = null;
                 }
+
+                // Switch to state-3 (preparing report)
+                showLoadingState(3);
 
                 // Store results in sessionStorage (only if not null)
                 try {
