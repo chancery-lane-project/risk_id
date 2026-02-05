@@ -30,6 +30,9 @@ def process_contract_task(
     import utils
 
     try:
+        # Capture start time for analytics
+        start_time = time.time()
+
         # Update status to processing
         task_manager.update_task(task_id, "processing", progress=10)
 
@@ -144,6 +147,11 @@ def process_contract_task(
             zero, one, two, three, return_result=True
         )
 
+        # Calculate statistics
+        word_count = len(full_contract_text.split())
+        page_count = max(1, round(word_count / 250))  # Estimate ~250 words per page
+        analysis_time = round(time.time() - start_time, 1)
+
         response = {
             "classification": result,
             "highlighted_output_url": f"output/{output_filename}",
@@ -153,7 +161,12 @@ def process_contract_task(
                 "cat2": CAT2,
                 "cat3": CAT3
             },
-            "file_hash": file_hash  # Include hash for find_clauses to use
+            "file_hash": file_hash,  # Include hash for find_clauses to use
+            "statistics": {
+                "word_count": word_count,
+                "page_count": page_count,
+                "analysis_time": analysis_time
+            }
         }
 
         # Cleanup task temp directory

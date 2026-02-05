@@ -141,6 +141,23 @@
               // The CSS will handle the rotation based on the score class
             }
           }
+
+          // Update statistics if available
+          if (data.statistics) {
+            const contentStats = document.getElementById('content-stats');
+            const analysisTime = document.getElementById('analysis-time');
+
+            if (contentStats && data.statistics.page_count && data.statistics.word_count) {
+              const pages = data.statistics.page_count;
+              const words = data.statistics.word_count.toLocaleString();
+              contentStats.textContent = `${pages} page${pages !== 1 ? 's' : ''} / ${words} words`;
+            }
+
+            if (analysisTime && data.statistics.analysis_time !== undefined) {
+              const seconds = data.statistics.analysis_time;
+              analysisTime.textContent = `${seconds} second${seconds !== 1 ? 's' : ''}`;
+            }
+          }
         }
       } catch (e) {
         // ignore
@@ -194,11 +211,11 @@
             </span>
             <span>
               <strong>Content:</strong><br />
-              5 pages / 3,116 words
+              <span id="content-stats">5 pages / 3,116 words</span>
             </span>
             <span>
               <strong>Analysis time:</strong><br />
-              5 seconds
+              <span id="analysis-time">5 seconds</span>
             </span>
           </div>
 
