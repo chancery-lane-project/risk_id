@@ -217,7 +217,7 @@ async def process_contract(file: UploadFile):
     )
     response = {
         "classification": result,
-        "highlighted_output_url": f"/output/{filename}",
+        "highlighted_output_url": f"output/{filename}",
         "bucket_labels": {
             "cat0": CAT0,
             "cat1": CAT1,

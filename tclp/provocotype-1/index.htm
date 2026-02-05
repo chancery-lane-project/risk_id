@@ -69,7 +69,7 @@
       </div>
 
         <div class="select-contract">
-          <form action="/index2.htm" method="get" id="analysisForm">
+          <form action="index2.htm" method="get" id="analysisForm">
           <div class="govuk-form-group" id="analysis-group">
             <fieldset class="govuk-fieldset"aria-describedby="analysis-hint analysis-error">
               <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
@@ -312,7 +312,7 @@
             const formData = new FormData();
             formData.append('file', fileToProcess, fileToProcess.name);
 
-            const resp = await fetch('/process/', { method: 'POST', body: formData });
+            const resp = await fetch('process/', { method: 'POST', body: formData });
             if (!resp.ok) {
               const errTxt = await resp.text();
               throw new Error(errTxt || 'Request failed');
@@ -324,7 +324,7 @@
             try {
               const clauseFormData = new FormData();
               clauseFormData.append('file', fileToProcess, fileToProcess.name);
-              const clauseResp = await fetch('/find_clauses/', { method: 'POST', body: clauseFormData });
+              const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
               if (clauseResp.ok) {
                 recommendResult = await clauseResp.json();
               } else {
