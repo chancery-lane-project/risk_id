@@ -325,13 +325,19 @@
               const clauseFormData = new FormData();
               clauseFormData.append('file', fileToProcess, fileToProcess.name);
               const clauseResp = await fetch('find_clauses/', { method: 'POST', body: clauseFormData });
+              console.log('Clause response status:', clauseResp.status);
               if (clauseResp.ok) {
-                recommendResult = await clauseResp.json();
+                const responseText = await clauseResp.text();
+                console.log('Clause response body:', responseText);
+                recommendResult = JSON.parse(responseText);
+                console.log('Parsed recommendResult:', recommendResult);
               } else {
                 const errTxt = await clauseResp.text();
+                console.error('Clause detection failed:', errTxt);
                 throw new Error(errTxt || 'Clause detection failed');
               }
             } catch (e) {
+              console.error('Error in find_clauses:', e);
               recommendResult = null;
             }
 

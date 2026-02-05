@@ -421,6 +421,8 @@ async def find_clauses(file: UploadFile = File(...)):
             "emissions_sources": utils.parse_emissions_sources(row.get("combined_labels"))
         })
 
+    print(f"[INFO] Returning {len(matches)} clause matches")
+    print(f"[DEBUG] Matches data: {matches}")
     return {"matches": matches}
 
 # --- Serve Frontend ---
