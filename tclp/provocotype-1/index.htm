@@ -302,6 +302,8 @@
               const html = await resp.text();
               const tmp = document.createElement('div');
               tmp.innerHTML = html;
+              // Remove style and script elements so CSS/JS doesn't pollute the contract text
+              tmp.querySelectorAll('style, script').forEach(el => el.remove());
               const text = tmp.textContent || tmp.innerText || '';
 
               // Create a file-like object from the text
