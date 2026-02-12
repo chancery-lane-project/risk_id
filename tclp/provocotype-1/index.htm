@@ -295,7 +295,7 @@
               const m = id.match(/^Contract(\d+)$/);
               if (!m) throw new Error('Invalid sample contract selection.');
               const num = m[1];
-              const sampleUrl = `assets/sample-contracts/contract${num}.txt`;
+              const sampleUrl = `assets/sample-contracts/contract-${num}.html`;
 
               const resp = await fetch(sampleUrl);
               if (!resp.ok) throw new Error('Failed to load sample contract.');
